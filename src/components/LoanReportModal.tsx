@@ -137,7 +137,7 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
           <div className="report-document-brand">
             <div><strong>Resumo do empréstimo</strong></div>
           </div>
-          <div className="report-document-id"><span>Contrato</span><strong>{loan.id}</strong><small>Emitido em {issuedAt}</small></div>
+          <div className="report-document-id"><span>Contrato</span><strong>{loan.id}</strong></div>
         </header>
 
         <section className="report-client-card">
