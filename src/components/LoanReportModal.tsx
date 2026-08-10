@@ -175,24 +175,34 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
 
         <section className="report-section">
           <div className="report-section-title"><strong>Agenda de cobranças</strong><span>{charges.length} itens</span></div>
-          <div className="report-schedule">
-            {charges.map((charge) => {
+          {(() => {
+            const half = charges.length > 4 ? Math.ceil(charges.length / 2) : charges.length;
+            const col1 = charges.slice(0, half);
+            const col2 = charges.slice(half);
+
+            const renderRow = (charge: Charge) => {
               const values = chargeValues(charge, loan.lateFeePerDay);
               return (
                 <div className="report-schedule-row" key={charge.id}>
                   <span className="report-charge-number">{charge.number ? `#${charge.number}` : charge.referenceMonth}</span>
-                  <div><span>Vencimento</span><strong>{date(charge.dueDate)}</strong></div>
-                  <div className="report-charge-amount">
-                    <span>{values.lateFee > 0 ? "Total atualizado" : "Valor a pagar"}</span>
+                  <div className="report-charge-info">
+                    <span>{date(charge.dueDate)}</span>
                     <strong>{money(values.updatedAmount)}</strong>
-                    {values.paid > 0 && <small>Original {money(values.original)} · pago {money(values.paid)}</small>}
-                    {values.lateFee > 0 && <small className="report-charge-late-fee">Parcela {money(values.outstanding)} + juros {money(values.lateFee)} · {values.overdue} {values.overdue === 1 ? "dia" : "dias"}</small>}
+                    {values.paid > 0 ? <small>Pago: {money(values.paid)}</small> : null}
+                    {values.lateFee > 0 ? <small className="report-charge-late-fee">+{money(values.lateFee)} juros ({values.overdue}d)</small> : null}
                   </div>
                   <span className={`report-charge-status report-charge-${charge.status.toLowerCase()}`}>{chargeStatus[charge.status]}</span>
                 </div>
               );
-            })}
-          </div>
+            };
+
+            return (
+              <div className="report-schedule-columns">
+                <div className="report-schedule-col">{col1.map(renderRow)}</div>
+                {col2.length > 0 ? <div className="report-schedule-col">{col2.map(renderRow)}</div> : null}
+              </div>
+            );
+          })()}
         </section>
       </div>
 

@@ -776,12 +776,12 @@ select.input { padding-right: 28px; }
 }
 
 @media (max-width: 420px) {
-  .metric-grid-main, .report-metric-grid { grid-template-columns: 1fr; }
-  .summary-strip { grid-template-columns: 1fr; }
-  .summary-strip > div:last-child { grid-column: auto; }
-  .summary-strip > div + div { border-top: 1px solid #ece9f0; }
-  .page-header { gap: 12px; }
-  .report-terms, .report-contract-status { grid-template-columns: 1fr; }
+.report-section-title strong { font-size: 14px; }
+.report-section-title > span { color: #96909d; font-size: 11px; }
+.report-terms { display: grid; grid-template-columns: repeat(4, 1fr); overflow: hidden; border: 1px solid #e8e5ed; border-radius: 11px; }
+.report-terms > div { min-width: 0; display: flex; flex-direction: column; padding: 13px; border-right: 1px solid #ece9f0; border-bottom: 1px solid #ece9f0; }
+.report-terms strong { margin-top: 5px; overflow-wrap: anywhere; font-size: 13px; }
+.report-schedule { overflow: hidden; border: 1px solid #e8e5ed; border-radius: 11px; }
 .report-schedule-row { display: grid; grid-template-columns: 54px minmax(105px, 1fr) minmax(150px, .9fr) auto; align-items: center; gap: 12px; padding: 11px 13px; border-top: 1px solid #eeebf1; }
 .report-schedule-row:first-child { border-top: 0; }
 .report-schedule-row > div { min-width: 0; display: flex; flex-direction: column; }
@@ -977,7 +977,58 @@ select.input { padding-right: 28px; }
   .summary-strip > div + div { border-top: 1px solid #ece9f0; }
   .page-header { gap: 12px; }
   .report-terms, .report-contract-status { grid-template-columns: 1fr; }
-}
+  .report-schedule-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .report-schedule-col { display: flex; flex-direction: column; border: 1px solid #e7e3ef; border-radius: 10px; overflow: hidden; background: #fff; }
+  .report-schedule-row { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #eeebf1; }
+  .report-schedule-row:first-child { border-top: 0; }
+  .report-charge-info { min-width: 0; display: flex; flex-direction: column; }
+  .report-charge-info span { color: #8e8899; font-size: 11px; }
+  .report-charge-info strong { color: #2e2938; font-size: 13px; font-weight: 700; margin-top: 1px; }
+  .report-charge-info small { color: #8e8899; font-size: 10px; margin-top: 2px; }
+  .report-charge-info .report-charge-late-fee { color: #c63f50; font-weight: 700; }
+  .report-charge-number { color: var(--purple-dark); font-size: 12px; font-weight: 800; }
+  .report-charge-status { width: max-content; padding: 4px 8px; border-radius: 20px; font-size: 9.5px; font-weight: 750; }
+  .report-charge-paid { color: #14835c; background: #eaf8f3; }
+  .report-charge-overdue { color: #ca4252; background: #fff0f1; }
+  .report-charge-pending { color: #9b671f; background: #fff6e7; }
+  .report-charge-partial { color: #4264bd; background: #edf2ff; }
+  .report-actions { position: sticky; bottom: -22px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: 20px -22px -22px; padding: 14px 22px; border-top: 1px solid #e8e5ed; background: rgba(251,250,253,.96); backdrop-filter: blur(8px); }
+
+  @media (max-width: 640px) {
+    .report-schedule-columns { grid-template-columns: 1fr; }
+  }
+
+  @media print {
+    @page { size: A4 portrait; margin: 0; }
+    html, body { height: 100% !important; }
+    body.printing-loan-report { width: 210mm !important; max-height: 297mm !important; padding: 8mm 12mm !important; box-sizing: border-box !important; background: #fff !important; font-size: 10.5px !important; }
+    body.printing-loan-report #root { display: none !important; }
+    body.printing-loan-report * { visibility: hidden !important; }
+    body.printing-loan-report .modal-layer,
+    body.printing-loan-report .modal,
+    body.printing-loan-report .modal-body,
+    body.printing-loan-report .loan-report-print,
+    body.printing-loan-report .loan-report-print * { visibility: visible !important; }
+    body.printing-loan-report .modal-layer { position: static; display: block; min-height: 0; padding: 0; background: #fff; }
+    body.printing-loan-report .modal { display: block; width: 100%; max-width: none; max-height: none; border: 0; border-radius: 0; box-shadow: none; animation: none; }
+    body.printing-loan-report .modal-header, body.printing-loan-report .report-actions { display: none !important; }
+    body.printing-loan-report .modal-body { display: block; padding: 0; }
+    body.printing-loan-report .loan-report-print { position: static; width: 100%; font-size: 10.5px; }
+
+    body.printing-loan-report .report-document-header { margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #ddd; }
+    body.printing-loan-report .report-client-card { padding: 6px 10px; margin-bottom: 6px; font-size: 11px; }
+    body.printing-loan-report .report-client-header { gap: 8px; }
+    body.printing-loan-report .avatar { width: 30px; height: 30px; font-size: 10px; }
+    body.printing-loan-report .report-client-data { margin-top: 4px; gap: 4px; font-size: 10px; }
+    body.printing-loan-report .report-contract-status { padding: 6px 10px; gap: 6px; margin-bottom: 6px; font-size: 10.5px; }
+    body.printing-loan-report .report-terms { padding: 6px 10px; gap: 4px 10px; font-size: 10px; }
+    body.printing-loan-report .report-section { margin-top: 6px; }
+    body.printing-loan-report .report-section-title { padding-bottom: 2px; margin-bottom: 4px; font-size: 11px; }
+
+    body.printing-loan-report .report-schedule-columns { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+    body.printing-loan-report .report-schedule-col { border: 1px solid #e2deea !important; border-radius: 6px !important; }
+    body.printing-loan-report .report-schedule-row { grid-template-columns: 32px 1fr auto !important; padding: 5px 8px !important; gap: 6px !important; border-top: 1px solid #eeebf1 !important; font-size: 9.5px !important; }
+  }
   .report-client-data { grid-template-columns: 1fr; }
   .report-client-address { grid-column: auto; }
   .report-client-item { border-right: 0; }
