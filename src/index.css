@@ -968,6 +968,7 @@ select.input { padding-right: 28px; }
   .auth-mobile-brand { width: 100%; display: flex; align-items: center; gap: 10px; margin-bottom: 70px; }
   .auth-mobile-brand strong { font-size: 18px; }
   .auth-footer { bottom: 18px; }
+  .report-schedule-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
@@ -977,29 +978,11 @@ select.input { padding-right: 28px; }
   .summary-strip > div + div { border-top: 1px solid #ece9f0; }
   .page-header { gap: 12px; }
   .report-terms, .report-contract-status { grid-template-columns: 1fr; }
-  .report-schedule-columns { grid-template-columns: 1fr; }
   .report-client-data { grid-template-columns: 1fr; }
   .report-client-address { grid-column: auto; }
   .report-client-item { border-right: 0; }
   .form-actions { flex-direction: column-reverse; }
   .form-actions .btn { width: 100%; }
-  
-  .report-schedule-columns { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .report-schedule-col { display: flex; flex-direction: column; border: 1px solid #e7e3ef; border-radius: 10px; overflow: hidden; background: #fff; }
-  .report-schedule-row { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #eeebf1; }
-  .report-schedule-row:first-child { border-top: 0; }
-  .report-charge-info { min-width: 0; display: flex; flex-direction: column; }
-  .report-charge-info span { color: #8e8899; font-size: 11px; }
-  .report-charge-info strong { color: #2e2938; font-size: 13px; font-weight: 700; margin-top: 1px; }
-  .report-charge-info small { color: #8e8899; font-size: 10px; margin-top: 2px; }
-  .report-charge-info .report-charge-late-fee { color: #c63f50; font-weight: 700; }
-  .report-charge-number { color: #6543ce; font-size: 12px; font-weight: 800; }
-  .report-charge-status { width: max-content; padding: 4px 8px; border-radius: 20px; font-size: 9.5px; font-weight: 750; }
-  .report-charge-paid { color: #14835c; background: #eaf8f3; }
-  .report-charge-overdue { color: #ca4252; background: #fff0f1; }
-  .report-charge-pending { color: #9b671f; background: #fff6e7; }
-  .report-charge-partial { color: #4264bd; background: #edf2ff; }
-  .report-actions { position: sticky; bottom: -22px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin: 20px -22px -22px; padding: 14px 22px; border-top: 1px solid #e8e5ed; background: rgba(251,250,253,.96); backdrop-filter: blur(8px); }
 }
 
 @media print {
