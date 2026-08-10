@@ -339,7 +339,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
                     {loan.payments && loan.payments.length > 0 ? (
                       <div style={{ marginTop: 20 }}>
                         <div className="schedule-head">
-                          <strong><Receipt size={16} inline /> Histórico de Pagamentos Recebidos ({loan.payments.length})</strong>
+                          <strong><Receipt size={16} /> Histórico de Pagamentos Recebidos ({loan.payments.length})</strong>
                         </div>
                         <div className="payment-history-list">
                           {loan.payments.map((p) => (
