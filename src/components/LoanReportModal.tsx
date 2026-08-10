@@ -119,6 +119,8 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  const issuedDate = date(loan.loanDate);
+
   return (
     <Modal
       open
@@ -129,10 +131,8 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
     >
       <div className="loan-report-print">
         <header className="report-document-header">
-          <div className="report-document-brand">
-            <div><strong>Resumo do empréstimo</strong></div>
-          </div>
-          <div className="report-document-id"><span>Contrato</span><strong>{loan.id}</strong></div>
+          <div className="report-document-brand" />
+          <div className="report-document-id"><span>Contrato <strong>{loan.id}</strong></span><small>{issuedDate}</small></div>
         </header>
 
         <section className="report-client-card">
@@ -149,7 +149,6 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
 
         <div className="report-contract-status">
           <div><span>Situação atual</span><strong>{loanStatus[loan.status]}</strong></div>
-          <div><span>Data do empréstimo</span><strong>{date(loan.loanDate)}</strong></div>
           <div><span>Valor atualizado a pagar</span><strong>{money(loan.summary.openBalance + loan.summary.lateFees)}</strong></div>
           {loan.summary.lateFees > 0 && <div className="report-late-fee-total"><span>Juros por atraso</span><strong>{money(loan.summary.lateFees)}</strong></div>}
           <div><span>Total recebido</span><strong>{money(loan.summary.received)}</strong></div>

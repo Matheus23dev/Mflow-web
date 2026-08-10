@@ -794,9 +794,9 @@ select.input { padding-right: 28px; }
   .main-column { width: 100%; margin: 0; }
   .content { padding: 0; }
   .panel, article { break-inside: avoid; box-shadow: none !important; }
-  @page { size: auto; margin: 10mm; }
+  @page { size: auto; margin: 0mm; }
   html.modal-open, body.modal-open { overflow: visible !important; }
-  body.printing-loan-report { overflow: visible !important; padding: 0 !important; background: #fff !important; }
+  body.printing-loan-report { overflow: visible !important; padding: 12mm !important; background: #fff !important; }
   body.printing-loan-report #root { display: none !important; }
   body.printing-loan-report * { visibility: hidden !important; }
   body.printing-loan-report .modal-layer,
