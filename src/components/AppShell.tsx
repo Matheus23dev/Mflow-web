@@ -62,8 +62,8 @@ export function AppShell({ page, onNavigate, user, onLogout, mobileOpen, setMobi
       {mobileOpen ? <button className="sidebar-backdrop" aria-label="Fechar menu" onClick={() => setMobileOpen(false)} /> : null}
       <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
         <div className="brand-row">
-          <div className="brand-mark"><span>M</span></div>
-          <div className="brand-copy"><strong>MFlow</strong><span>Gestão financeira</span></div>
+          <div className="brand-mark"><span>$</span></div>
+          <div className="brand-copy"><strong>Gestão Financeira</strong><span>Painel de controle</span></div>
           <button className="icon-button sidebar-close" onClick={() => setMobileOpen(false)}><X size={19} /></button>
         </div>
         <nav className="side-nav" aria-label="Navegação principal">

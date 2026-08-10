@@ -75,7 +75,7 @@ function App() {
   }
 
   if (checkingSession) {
-    return <div className="boot-screen"><div className="brand-mark"><span>M</span></div><LoadingState label="Abrindo seu MFlow" /></div>;
+    return <div className="boot-screen"><div className="brand-mark"><span>$</span></div><LoadingState label="Carregando o sistema..." /></div>;
   }
 
   if (!user) return <AuthPage onAuthenticated={authenticated} />;

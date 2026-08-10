@@ -50,7 +50,7 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (session: AuthS
   return (
     <div className="auth-page">
       <section className="auth-showcase">
-        <div className="auth-brand"><div className="brand-mark brand-mark-light"><span>M</span></div><strong>MFlow</strong></div>
+        <div className="auth-brand"><div className="brand-mark brand-mark-light"><span>$</span></div><strong>Gestão Financeira</strong></div>
         <div className="auth-showcase-content">
           <div className="auth-pill"><Sparkles size={15} /> Simples, claro e sob controle</div>
           <h1>Seu dinheiro.<br /><em>Seu ritmo.</em></h1>
@@ -66,12 +66,12 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (session: AuthS
       </section>
 
       <section className="auth-form-side">
-        <div className="auth-mobile-brand"><div className="brand-mark"><span>M</span></div><strong>MFlow</strong></div>
+        <div className="auth-mobile-brand"><div className="brand-mark"><span>$</span></div><strong>Gestão Financeira</strong></div>
         <div className="auth-form-wrap">
           <div className="auth-intro">
             <span className="eyebrow">{mode === "login" ? "Bem-vindo de volta" : "Primeiro acesso"}</span>
             <h2>{mode === "login" ? "Acesse sua conta" : "Crie sua conta"}</h2>
-            <p>{mode === "login" ? "Entre para acompanhar sua operação financeira." : "Configure o administrador inicial do MFlow."}</p>
+            <p>{mode === "login" ? "Entre para acompanhar sua operação financeira." : "Configure o administrador inicial do sistema."}</p>
           </div>
           <form onSubmit={submit} className="auth-form">
             {mode === "register" ? (
@@ -83,14 +83,14 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (session: AuthS
               <div className="auth-input"><LockKeyhole size={18} /><input name="password" type={showPassword ? "text" : "password"} required minLength={6} placeholder="Mínimo de 6 caracteres" autoComplete={mode === "login" ? "current-password" : "new-password"} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
             </label>
             {error ? <div className="auth-error">{error}</div> : null}
-            <Button loading={loading} className="auth-submit" type="submit">{mode === "login" ? "Entrar no MFlow" : "Criar conta"}<ArrowRight size={18} /></Button>
+            <Button loading={loading} className="auth-submit" type="submit">{mode === "login" ? "Entrar no sistema" : "Criar conta"}<ArrowRight size={18} /></Button>
           </form>
           {needsSetup || mode === "register" ? <p className="auth-switch">
             {mode === "login" ? "Configurando o sistema pela primeira vez?" : "Já possui uma conta?"}{" "}
             <button onClick={() => changeMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Criar acesso" : "Fazer login"}</button>
           </p> : null}
         </div>
-        <p className="auth-footer">© {new Date().getFullYear()} MFlow · Gestão financeira sem complicação.</p>
+        <p className="auth-footer">© {new Date().getFullYear()} Gestão financeira sem complicação.</p>
       </section>
     </div>
   );
