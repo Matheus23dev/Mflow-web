@@ -63,7 +63,7 @@ export function AppShell({ page, onNavigate, user, onLogout, mobileOpen, setMobi
       <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
         <div className="brand-row">
           <div className="brand-mark"><span>M</span></div>
-          <div className="brand-copy"><strong>Gestão Financeira</strong><span>Painel de controle</span></div>
+          <div className="brand-copy"><strong>MFlow</strong><span>Gestão financeira</span></div>
           <button className="icon-button sidebar-close" onClick={() => setMobileOpen(false)}><X size={19} /></button>
         </div>
         <nav className="side-nav" aria-label="Navegação principal">
