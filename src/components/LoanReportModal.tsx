@@ -119,11 +119,6 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  const issuedAt = new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date());
-
   return (
     <Modal
       open
