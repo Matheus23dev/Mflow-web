@@ -539,6 +539,12 @@ select.input { padding-right: 28px; }
   .dashboard-page .upcoming-panel .collection-list.compact { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
   .dashboard-page .upcoming-panel > .empty-state { flex: 1; }
   .dashboard-page .dashboard-aside { min-height: 0; }
+  .report-page .report-grid { min-height: 0; flex: 1; }
+  .report-page .report-chart-panel { min-height: 0; display: flex; flex-direction: column; }
+  .report-page .bar-chart { height: auto; min-height: 170px; flex: 1; }
+  .report-page .profitability-card { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .report-page > .loading-state,
+  .report-page > .error-state { flex: 1; }
 }
 
 @media (min-width: 861px) and (max-width: 1120px) {

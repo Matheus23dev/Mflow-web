@@ -28,7 +28,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   }, [data]);
 
   return (
-    <div className="page-enter report-page">
+    <div className="page-enter data-page report-page">
       <PageHeader eyebrow="Análise" title="Relatórios" description="Entenda o retorno, o risco e a composição da sua carteira." action={<Button variant="secondary" onClick={() => window.print()}><Printer size={17} /> Imprimir</Button>} />
       <div className="report-filter panel"><div><CalendarRange size={18} /><strong>Período da análise</strong></div><Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /><span>até</span><Input type="date" min={from} value={to} onChange={(event) => setTo(event.target.value)} /><button onClick={() => { setFrom(""); setTo(""); }}>Todo o período</button></div>
       {!data && !error ? <LoadingState /> : null}
