@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Search } from "lucide-react";
+import { Ban, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Receipt, Search } from "lucide-react";
 import { api, queryString } from "../lib/api";
 import { date, money, todayInput } from "../lib/format";
 import type { Customer, Loan, LoanStatus, LoanType } from "../types";
@@ -238,6 +238,43 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
   );
 }
 
+function CancelLoanModal({ loan, onClose, onCancelled }: { loan: Loan | null; onClose: () => void; onCancelled: () => void }) {
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!loan) return null;
+
+  async function confirmCancel() {
+    if (!loan) return;
+    setCancelling(true);
+    setError("");
+    try {
+      await api<{ success: boolean }>(`/loans/${loan.id}/cancel`, { method: "POST" });
+      onCancelled();
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível cancelar o contrato.");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  return (
+    <Modal open={Boolean(loan)} onClose={onClose} title="Cancelar contrato" description={`Cliente: ${loan.customer.name}`} size="sm">
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "#444" }}>
+          Tem certeza de que deseja cancelar este contrato de <strong>{money(loan.summary.openBalance)}</strong>? O contrato passará para o status <strong>CANCELADO</strong>.
+        </p>
+        {error ? <div className="form-error">{error}</div> : null}
+        <div className="form-actions" style={{ margin: "10px -26px -26px", padding: "14px 26px" }}>
+          <Button variant="ghost" onClick={onClose}>Voltar</Button>
+          <Button variant="danger" loading={cancelling} onClick={confirmCancel}>Sim, cancelar contrato</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void; onSaved?: (message: string) => void }) {
   const [loans, setLoans] = useState<Loan[] | null>(null);
   const [status, setStatus] = useState<LoanStatus | "">("");
@@ -245,6 +282,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+  const [cancellingLoan, setCancellingLoan] = useState<Loan | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
@@ -268,7 +306,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
         {loans && filtered.length === 0 ? <EmptyState title="Nenhum empréstimo por aqui" description="Crie um novo contrato ou ajuste os filtros da lista." action={!loans.length ? <Button onClick={onNewLoan}><Plus size={17} /> Criar empréstimo</Button> : undefined} /> : null}
         <div className="loan-list">
           {filtered.map((loan) => {
-            const progress = loan.summary.totalCount ? loan.summary.paidCount / loan.summary.totalCount * 100 : (Number(loan.principalAmount) - Number(loan.principalBalance)) / Number(loan.principalAmount) * 100;
+            const progress = loan.summary.totalCount ? (loan.summary.paidCount / loan.summary.totalCount) * 100 : ((Number(loan.principalAmount) - Number(loan.principalBalance)) / Number(loan.principalAmount)) * 100;
             const charges = loan.type === "WEEKLY" ? loan.installments : loan.monthlyCharges;
             const isOpen = expanded === loan.id;
             return (
@@ -290,12 +328,32 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
                       <div className="loan-detail-actions">
                         <Button variant="secondary" onClick={() => onReport(loan)}><FileText size={17} /> Relatório</Button>
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setEditingLoan(loan)}><Pencil size={17} /> Editar contrato</Button> : null}
+                        {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setCancellingLoan(loan)}><Ban size={17} /> Cancelar</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button onClick={() => onPayment(loan)}><CircleDollarSign size={17} /> Registrar pagamento</Button> : null}
                       </div>
                     </div>
                     <div className="schedule-grid">
                       {charges.slice(0, 12).map((charge) => <div className="schedule-item" key={charge.id}><span>{charge.number ? `#${charge.number}` : charge.referenceMonth}</span><div><strong>{money(charge.amount || charge.interestAmount)}</strong><small>{date(charge.dueDate)}</small></div><StatusBadge status={charge.status} /></div>)}
                     </div>
+
+                    {loan.payments && loan.payments.length > 0 ? (
+                      <div style={{ marginTop: 20 }}>
+                        <div className="schedule-head">
+                          <strong><Receipt size={16} inline /> Histórico de Pagamentos Recebidos ({loan.payments.length})</strong>
+                        </div>
+                        <div className="payment-history-list">
+                          {loan.payments.map((p) => (
+                            <div className="payment-history-item" key={p.id}>
+                              <div>
+                                <strong>{money(p.amount)}</strong>
+                                <span>{date(p.paymentDate)} · {p.paymentMethod === "PIX" ? "PIX" : p.paymentMethod === "CASH" ? "Dinheiro" : p.paymentMethod === "TRANSFER" ? "Transferência" : "Outro"} {p.notes ? `· ${p.notes}` : ""}</span>
+                              </div>
+                              <StatusBadge status="PAID" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </article>
@@ -305,7 +363,9 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
       </section>
 
       <EditLoanModal loan={editingLoan} onClose={() => setEditingLoan(null)} onSaved={() => { load(); onSaved?.("Empréstimo atualizado com sucesso."); }} />
+      <CancelLoanModal loan={cancellingLoan} onClose={() => setCancellingLoan(null)} onCancelled={() => { load(); onSaved?.("Contrato cancelado."); }} />
     </div>
   );
 }
+
 
