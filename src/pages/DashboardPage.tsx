@@ -39,7 +39,7 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
   const collectionRate = portfolioTotal > 0 ? Math.min(100, (m.totalReceived / portfolioTotal) * 100) : 0;
 
   return (
-    <div className="page-enter">
+    <div className="page-enter data-page dashboard-page">
       <PageHeader
         eyebrow={`${greeting} · ${new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date())}`}
         title="Visão geral da operação"

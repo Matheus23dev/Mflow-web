@@ -534,6 +534,15 @@ select.input { padding-right: 28px; }
   .data-page .table-panel > .loading-state,
   .data-page .table-panel > .empty-state,
   .data-page .table-panel > .error-state { flex: 1; }
+  .dashboard-page .dashboard-grid { min-height: 0; flex: 1; }
+  .dashboard-page .upcoming-panel { min-height: 0; display: flex; flex-direction: column; }
+  .dashboard-page .upcoming-panel .collection-list.compact { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .dashboard-page .upcoming-panel > .empty-state { flex: 1; }
+  .dashboard-page .dashboard-aside { min-height: 0; }
+}
+
+@media (min-width: 861px) and (max-width: 1120px) {
+  .dashboard-page .dashboard-grid { grid-template-rows: minmax(0, 1fr) auto; }
 }
 
 /* Relatório individual do empréstimo. */
