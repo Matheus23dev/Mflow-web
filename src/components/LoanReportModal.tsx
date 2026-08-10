@@ -54,7 +54,7 @@ function whatsappPhone(phone: string) {
 function reportText(loan: Loan) {
   const charges = loan.type === "WEEKLY" ? loan.installments : loan.monthlyCharges;
   const lines = [
-    "*MFlow | Resumo do empréstimo*",
+    "*Resumo do empréstimo*",
     `Cliente: ${loan.customer.name}`,
     `Contrato: ${loan.id}`,
     `Situação: ${loanStatus[loan.status]}`,
@@ -75,8 +75,6 @@ function reportText(loan: Loan) {
       return `${label}: ${money(values.updatedAmount)} em ${date(charge.dueDate)} — ${chargeStatus[charge.status]}${lateFee}`;
     }),
     ...(charges.length > 20 ? [`... e mais ${charges.length - 20} cobranças no relatório completo.`] : []),
-    "",
-    "Relatório informativo emitido pelo MFlow.",
   ];
   return lines.join("\n");
 }
@@ -137,8 +135,7 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
       <div className="loan-report-print">
         <header className="report-document-header">
           <div className="report-document-brand">
-            <span className="brand-mark"><span>M</span></span>
-            <div><strong>MFlow</strong><small>Relatório do empréstimo</small></div>
+            <div><strong>Resumo do empréstimo</strong></div>
           </div>
           <div className="report-document-id"><span>Contrato</span><strong>{loan.id}</strong><small>Emitido em {issuedAt}</small></div>
         </header>
@@ -206,7 +203,6 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
 
         <footer className="report-document-footer">
           <p>Este documento é um resumo informativo do contrato e da situação registrada no momento da emissão.</p>
-          <span>MFlow · Gestão financeira</span>
         </footer>
       </div>
 
