@@ -148,7 +148,7 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
   }), [customers]);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter data-page customers-page">
       <PageHeader eyebrow="Relacionamento" title="Clientes" description="Todas as pessoas da sua carteira em um só lugar." action={<Button onClick={() => setModalOpen(true)}><Plus size={18} /> Novo cliente</Button>} />
 
       <div className="summary-strip">

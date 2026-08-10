@@ -187,7 +187,7 @@ button:disabled { cursor: not-allowed; opacity: .62; }
 .customer-table { padding: 0 12px 10px; }
 .table-head, .customer-row { display: grid; grid-template-columns: minmax(190px, 1.25fr) minmax(175px, 1fr) .55fr .7fr 22px; align-items: center; gap: 13px; }
 .table-head { padding: 12px 13px 9px; color: #aaa6b1; font-size: 8px; font-weight: 750; letter-spacing: .45px; text-transform: uppercase; }
-.customer-row { width: 100%; padding: 12px 13px; border: 0; border-top: 1px solid #f0eef3; color: #393541; background: transparent; text-align: left; transition: .15s ease; }
+.customer-row { width: 100%; padding: 8px 13px; border: 0; border-top: 1px solid #f0eef3; color: #393541; background: transparent; text-align: left; transition: .15s ease; }
 .customer-row:hover { border-radius: 9px; background: #faf9fc; }
 .customer-name { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .customer-name p, .customer-row > div { min-width: 0; display: flex; flex-direction: column; margin: 0; }
@@ -517,6 +517,25 @@ select.input { padding-right: 28px; }
 .loan-detail-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .segmented { flex-wrap: wrap; }
 
+@media (min-width: 861px) {
+  body { height: 100dvh; overflow: hidden; }
+  #root, .app-shell { height: 100dvh; min-height: 0; }
+  .main-column { height: 100dvh; min-height: 0; display: flex; flex-direction: column; }
+  .topbar { flex: 0 0 auto; }
+  .content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 24px; }
+  .data-page { height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .data-page .table-panel { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+  .data-page .customer-table,
+  .data-page .loan-list,
+  .data-page .collection-list:not(.compact),
+  .data-page .cash-list { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .data-page .table-head,
+  .data-page .collection-table-head { position: sticky; z-index: 2; top: 0; background: #fff; }
+  .data-page .table-panel > .loading-state,
+  .data-page .table-panel > .empty-state,
+  .data-page .table-panel > .error-state { flex: 1; }
+}
+
 /* Relatório individual do empréstimo. */
 .loan-report-print { color: #272431; background: #fff; }
 .report-document-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 2px solid #ece8f5; }
@@ -656,7 +675,7 @@ select.input { padding-right: 28px; }
   .search-box, .search-box.small { width: 100%; }
   .customer-table { padding: 0 6px 7px; }
   .table-head { display: none; }
-  .customer-row { grid-template-columns: minmax(140px, 1fr) .45fr 16px; padding: 12px 8px; }
+  .customer-row { grid-template-columns: minmax(140px, 1fr) .45fr 16px; padding: 9px 8px; }
   .customer-row > div:nth-of-type(3) { display: none; }
   .customer-detail-stats { grid-template-columns: 1fr 1fr; }
   .customer-profile-card { align-items: flex-start; flex-wrap: wrap; }

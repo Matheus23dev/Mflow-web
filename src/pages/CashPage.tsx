@@ -90,7 +90,7 @@ export function CashPage({ refreshKey, onSaved }: { refreshKey: number; onSaved:
   }
 
   return (
-    <div className="page-enter">
+    <div className="page-enter data-page cash-page">
       <PageHeader
         eyebrow="Movimentação"
         title="Fluxo de caixa"

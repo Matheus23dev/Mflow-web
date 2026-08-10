@@ -150,7 +150,7 @@ export function CollectionsPage({ refreshKey, onPayment }: { refreshKey: number;
   const overdue = filtered.filter((item) => item.status === "OVERDUE").reduce((sum, item) => sum + item.updatedAmount, 0);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter data-page collections-page">
       <PageHeader eyebrow="Agenda" title="Cobranças" description="Priorize vencimentos, atrasos e contatos do dia." />
       <div className="collection-summary">
         <div><span className="summary-icon purple"><CalendarCheck2 size={20} /></span><p><span>No período</span><strong>{money(total)}</strong><small>{filtered.length} cobranças</small></p></div>

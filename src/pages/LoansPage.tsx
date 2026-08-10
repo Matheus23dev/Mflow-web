@@ -110,7 +110,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport }: { refr
   const filtered = useMemo(() => loans?.filter((loan) => loan.customer.name.toLowerCase().includes(search.toLowerCase())) || [], [loans, search]);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter data-page loans-page">
       <PageHeader eyebrow="Carteira" title="Empréstimos" description="Acompanhe contratos, saldos e andamento dos pagamentos." action={<Button onClick={onNewLoan}><Plus size={18} /> Novo empréstimo</Button>} />
       <section className="panel table-panel">
         <div className="list-toolbar loan-toolbar">
