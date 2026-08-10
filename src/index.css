@@ -790,13 +790,9 @@ select.input { padding-right: 28px; }
 }
 
 @media print {
-  .sidebar, .topbar, .page-action, .report-filter { display: none !important; }
-  .main-column { width: 100%; margin: 0; }
-  .content { padding: 0; }
-  .panel, article { break-inside: avoid; box-shadow: none !important; }
   @page { size: auto; margin: 0mm; }
   html.modal-open, body.modal-open { overflow: visible !important; }
-  body.printing-loan-report { overflow: visible !important; padding: 12mm !important; background: #fff !important; }
+  body.printing-loan-report { overflow: visible !important; padding: 6mm 8mm !important; background: #fff !important; font-size: 11px !important; }
   body.printing-loan-report #root { display: none !important; }
   body.printing-loan-report * { visibility: hidden !important; }
   body.printing-loan-report .modal-layer,
@@ -808,7 +804,15 @@ select.input { padding-right: 28px; }
   body.printing-loan-report .modal { display: block; width: 100%; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0; box-shadow: none; animation: none; }
   body.printing-loan-report .modal-header, body.printing-loan-report .report-actions { display: none !important; }
   body.printing-loan-report .modal-body { display: block; overflow: visible; padding: 0; }
-  body.printing-loan-report .loan-report-print { position: static; width: 100%; }
+  body.printing-loan-report .loan-report-print { position: static; width: 100%; font-size: 11px; }
+  body.printing-loan-report .report-document-header { margin-bottom: 6px; padding-bottom: 6px; }
+  body.printing-loan-report .report-client-card { padding: 6px 10px; margin-bottom: 6px; }
+  body.printing-loan-report .report-client-data { margin-top: 4px; }
+  body.printing-loan-report .report-contract-status { padding: 6px 10px; gap: 4px; margin-bottom: 6px; }
+  body.printing-loan-report .report-section { margin-top: 6px; }
+  body.printing-loan-report .report-section-title { padding-bottom: 3px; margin-bottom: 4px; font-size: 11px; }
+  body.printing-loan-report .report-terms { padding: 6px 10px; gap: 4px 12px; }
+  body.printing-loan-report .report-schedule-row { padding: 4px 8px; gap: 6px; }
   body.printing-loan-report .report-document-header,
   body.printing-loan-report .report-client-card,
   body.printing-loan-report .report-contract-status,
