@@ -200,10 +200,6 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
             })}
           </div>
         </section>
-
-        <footer className="report-document-footer">
-          <p>Este documento é um resumo informativo do contrato e da situação registrada no momento da emissão.</p>
-        </footer>
       </div>
 
       <div className="report-actions">
