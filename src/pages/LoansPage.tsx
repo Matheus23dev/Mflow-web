@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Ban, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Receipt, Search } from "lucide-react";
+import { Ban, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Search } from "lucide-react";
 import { api, queryString } from "../lib/api";
 import { date, money, todayInput } from "../lib/format";
 import type { Customer, Loan, LoanStatus, LoanType } from "../types";
@@ -335,25 +335,6 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
                     <div className="schedule-grid">
                       {charges.slice(0, 12).map((charge) => <div className="schedule-item" key={charge.id}><span>{charge.number ? `#${charge.number}` : charge.referenceMonth}</span><div><strong>{money(charge.amount || charge.interestAmount)}</strong><small>{date(charge.dueDate)}</small></div><StatusBadge status={charge.status} /></div>)}
                     </div>
-
-                    {loan.payments && loan.payments.length > 0 ? (
-                      <div style={{ marginTop: 20 }}>
-                        <div className="schedule-head">
-                          <strong><Receipt size={16} /> Histórico de Pagamentos Recebidos ({loan.payments.length})</strong>
-                        </div>
-                        <div className="payment-history-list">
-                          {loan.payments.map((p) => (
-                            <div className="payment-history-item" key={p.id}>
-                              <div>
-                                <strong>{money(p.amount)}</strong>
-                                <span>{date(p.paymentDate)} · {p.paymentMethod === "PIX" ? "PIX" : p.paymentMethod === "CASH" ? "Dinheiro" : p.paymentMethod === "TRANSFER" ? "Transferência" : "Outro"} {p.notes ? `· ${p.notes}` : ""}</span>
-                              </div>
-                              <StatusBadge status="PAID" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
               </article>
