@@ -50,7 +50,7 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (session: AuthS
   return (
     <div className="auth-page">
       <section className="auth-showcase">
-        <div className="auth-brand"><div className="brand-mark brand-mark-light"><span>$</span></div><strong>Gestão Financeira</strong></div>
+        <div className="auth-brand"><div className="brand-mark brand-mark-light"><span>M</span></div><strong>Gestão Financeira</strong></div>
         <div className="auth-showcase-content">
           <div className="auth-pill"><Sparkles size={15} /> Simples, claro e sob controle</div>
           <h1>Seu dinheiro.<br /><em>Seu ritmo.</em></h1>
@@ -66,7 +66,7 @@ export function AuthPage({ onAuthenticated }: { onAuthenticated: (session: AuthS
       </section>
 
       <section className="auth-form-side">
-        <div className="auth-mobile-brand"><div className="brand-mark"><span>$</span></div><strong>Gestão Financeira</strong></div>
+        <div className="auth-mobile-brand"><div className="brand-mark"><span>M</span></div><strong>Gestão Financeira</strong></div>
         <div className="auth-form-wrap">
           <div className="auth-intro">
             <span className="eyebrow">{mode === "login" ? "Bem-vindo de volta" : "Primeiro acesso"}</span>

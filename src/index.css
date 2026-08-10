@@ -977,6 +977,7 @@ select.input { padding-right: 28px; }
   .summary-strip > div + div { border-top: 1px solid #ece9f0; }
   .page-header { gap: 12px; }
   .report-terms, .report-contract-status { grid-template-columns: 1fr; }
+}
   .report-client-data { grid-template-columns: 1fr; }
   .report-client-address { grid-column: auto; }
   .report-client-item { border-right: 0; }
