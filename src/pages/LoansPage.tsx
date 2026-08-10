@@ -135,6 +135,8 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
 
   if (!loan) return null;
 
+  const isWeekly = loan.type === "WEEKLY";
+  const hasPayments = (loan.summary?.paidCount || 0) > 0 || (loan.payments?.length || 0) > 0;
   const paidCount = loan.summary?.paidCount || 0;
   const paidAmountTotal = loan.installments
     ? loan.installments.filter((i) => i.status === "PAID" || Number(i.paidAmount) > 0).reduce((sum, i) => sum + Number(i.paidAmount || i.amount || 0), 0)
