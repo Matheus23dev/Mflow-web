@@ -85,7 +85,7 @@ function App() {
       <AppShell page={page} onNavigate={setPage} user={user} onLogout={logout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} onSearch={(query) => { setCustomerSearch(query); setPage("customers"); }}>
         {page === "dashboard" ? <DashboardPage refreshKey={refreshKey} onNavigate={setPage} onNewLoan={() => setLoanModalOpen(true)} /> : null}
         {page === "customers" ? <CustomersPage key={customerSearch} refreshKey={refreshKey} onCreated={saved} onReport={setReportLoan} externalSearch={customerSearch} /> : null}
-        {page === "loans" ? <LoansPage refreshKey={refreshKey} onNewLoan={() => setLoanModalOpen(true)} onPayment={payLoan} onReport={setReportLoan} /> : null}
+        {page === "loans" ? <LoansPage refreshKey={refreshKey} onNewLoan={() => setLoanModalOpen(true)} onPayment={payLoan} onReport={setReportLoan} onSaved={saved} /> : null}
         {page === "collections" ? <CollectionsPage refreshKey={refreshKey} onPayment={(preset) => setPaymentTarget({ loanId: preset.loanId, preset })} /> : null}
         {page === "cash" ? <CashPage refreshKey={refreshKey} onSaved={saved} /> : null}
         {page === "reports" ? <ReportsPage refreshKey={refreshKey} /> : null}

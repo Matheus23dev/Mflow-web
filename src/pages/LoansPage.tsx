@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Phone, Plus, Search } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Search } from "lucide-react";
 import { api, queryString } from "../lib/api";
 import { date, money, todayInput } from "../lib/format";
 import type { Customer, Loan, LoanStatus, LoanType } from "../types";
@@ -93,12 +93,145 @@ export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onC
   );
 }
 
-export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void }) {
+export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; onClose: () => void; onSaved: (updatedLoan: Loan) => void }) {
+  const [principalAmount, setPrincipalAmount] = useState("");
+  const [principalBalance, setPrincipalBalance] = useState("");
+  const [lateFeePerDay, setLateFeePerDay] = useState("0");
+  const [frequency, setFrequency] = useState<"WEEKLY" | "BIWEEKLY" | "MONTHLY">("WEEKLY");
+  const [installmentCount, setInstallmentCount] = useState("");
+  const [installmentAmount, setInstallmentAmount] = useState("");
+  const [firstDueDate, setFirstDueDate] = useState("");
+  const [monthlyDueDay, setMonthlyDueDay] = useState("10");
+  const [rateMode, setRateMode] = useState<"percentage" | "fixed">("percentage");
+  const [monthlyInterestRate, setMonthlyInterestRate] = useState("");
+  const [monthlyInterestAmount, setMonthlyInterestAmount] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!loan) return;
+    setPrincipalAmount(loan.principalAmount || "");
+    setPrincipalBalance(loan.principalBalance || loan.principalAmount || "");
+    setLateFeePerDay(loan.lateFeePerDay || "0");
+    if (loan.type === "WEEKLY") {
+      setFrequency(loan.frequency || "WEEKLY");
+      setInstallmentCount(loan.installmentCount?.toString() || "10");
+      setInstallmentAmount(loan.installmentAmount?.toString() || "");
+      setFirstDueDate(loan.firstDueDate ? loan.firstDueDate.split("T")[0] : "");
+    } else {
+      setMonthlyDueDay(loan.monthlyDueDay?.toString() || "10");
+      if (loan.monthlyInterestAmount && !loan.monthlyInterestRate) {
+        setRateMode("fixed");
+        setMonthlyInterestAmount(loan.monthlyInterestAmount.toString());
+        setMonthlyInterestRate("");
+      } else {
+        setRateMode("percentage");
+        setMonthlyInterestRate(loan.monthlyInterestRate?.toString() || "");
+        setMonthlyInterestAmount("");
+      }
+    }
+    setError("");
+  }, [loan]);
+
+  if (!loan) return null;
+
+  const hasPayments = (loan.summary?.paidCount || 0) > 0 || (loan.payments?.length || 0) > 0;
+  const isWeekly = loan.type === "WEEKLY";
+
+  const totalCalculated = isWeekly ? Number(installmentCount || 0) * Number(installmentAmount || 0) : Number(principalBalance || principalAmount || 0);
+  const monthlyInterestCalculated = isWeekly ? 0 : (rateMode === "percentage" ? (Number(principalBalance || principalAmount || 0) * Number(monthlyInterestRate || 0)) / 100 : Number(monthlyInterestAmount || 0));
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!loan) return;
+    setSaving(true);
+    setError("");
+
+    const body: Record<string, unknown> = {
+      principalAmount: Number(principalAmount),
+      principalBalance: Number(principalBalance),
+      lateFeePerDay: Number(lateFeePerDay),
+    };
+
+    if (isWeekly) {
+      body.frequency = frequency;
+      body.installmentCount = Number(installmentCount);
+      body.installmentAmount = Number(installmentAmount);
+      body.firstDueDate = firstDueDate;
+    } else {
+      body.monthlyDueDay = Number(monthlyDueDay);
+      if (rateMode === "percentage") {
+        body.monthlyInterestRate = Number(monthlyInterestRate);
+      } else {
+        body.monthlyInterestAmount = Number(monthlyInterestAmount);
+      }
+    }
+
+    try {
+      const updated = await api<Loan>(`/loans/${loan.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+      onSaved(updated);
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível editar o empréstimo.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open={Boolean(loan)} onClose={onClose} title="Editar empréstimo" description={`Contrato de ${loan.customer.name}`} size="lg">
+      <form onSubmit={submit} className="form-grid loan-form">
+        {hasPayments ? (
+          <div className="field-span form-info-box">
+            <strong>Atenção ao renegociar:</strong> Este contrato possui pagamentos registrados. As cobranças já quitadas serão mantidas no histórico, e as alterações serão aplicadas ao saldo devedor e parcelas futuras.
+          </div>
+        ) : null}
+
+        <Field label="Valor Principal Inicial"><Input type="number" min="0.01" step="0.01" required value={principalAmount} onChange={(e) => setPrincipalAmount(e.target.value)} /></Field>
+        <Field label="Saldo Devedor Atual"><Input type="number" min="0" step="0.01" required value={principalBalance} onChange={(e) => setPrincipalBalance(e.target.value)} /></Field>
+        <Field label="Multa por dia de atraso"><Input type="number" min="0" step="0.01" required value={lateFeePerDay} onChange={(e) => setLateFeePerDay(e.target.value)} /></Field>
+
+        {isWeekly ? (
+          <>
+            <Field label="Frequência"><Select value={frequency} onChange={(e) => setFrequency(e.target.value as "WEEKLY" | "BIWEEKLY" | "MONTHLY")}><option value="WEEKLY">Semanal</option><option value="BIWEEKLY">Quinzenal</option><option value="MONTHLY">Mensal</option></Select></Field>
+            <Field label="Quantidade de parcelas"><Input type="number" min="1" required value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} /></Field>
+            <Field label="Valor da parcela"><Input type="number" min="0.01" step="0.01" required value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} placeholder="0,00" /></Field>
+            <Field label="Primeiro vencimento"><Input type="date" required value={firstDueDate} onChange={(e) => setFirstDueDate(e.target.value)} /></Field>
+            <div className="contract-preview field-span"><span>Total contratado estimado</span><strong>{money(totalCalculated)}</strong><small>{installmentCount || 0} parcelas de {money(installmentAmount)}</small></div>
+          </>
+        ) : (
+          <>
+            <Field label="Dia do vencimento mensal"><Input type="number" min="1" max="31" required value={monthlyDueDay} onChange={(e) => setMonthlyDueDay(e.target.value)} /></Field>
+            <div className="field-span loan-type-picker">
+              <button type="button" className={rateMode === "percentage" ? "selected" : ""} onClick={() => setRateMode("percentage")}><div><strong>Taxa percentual (%)</strong></div></button>
+              <button type="button" className={rateMode === "fixed" ? "selected" : ""} onClick={() => setRateMode("fixed")}><div><strong>Valor fixo de juros (R$)</strong></div></button>
+            </div>
+            {rateMode === "percentage" ? (
+              <Field label="Taxa de juros ao mês (%)"><Input type="number" min="0.0001" step="0.0001" required value={monthlyInterestRate} onChange={(e) => setMonthlyInterestRate(e.target.value)} placeholder="Ex.: 10" /></Field>
+            ) : (
+              <Field label="Valor mensal de juros (R$)"><Input type="number" min="0.01" step="0.01" required value={monthlyInterestAmount} onChange={(e) => setMonthlyInterestAmount(e.target.value)} placeholder="Ex.: 1000,00" /></Field>
+            )}
+            <div className="contract-preview field-span"><span>Juros mensal estimado</span><strong>{money(monthlyInterestCalculated)}</strong><small>{rateMode === "percentage" ? `Taxa de ${Number(monthlyInterestRate || 0).toLocaleString("pt-BR")}% sobre ${money(principalBalance || principalAmount)}` : `Juros fixos de ${money(monthlyInterestAmount)}`}</small></div>
+          </>
+        )}
+
+        {error ? <div className="form-error field-span">{error}</div> : null}
+        <div className="form-actions field-span"><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Salvar alterações</Button></div>
+      </form>
+    </Modal>
+  );
+}
+
+export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void; onSaved?: (message: string) => void }) {
   const [loans, setLoans] = useState<Loan[] | null>(null);
   const [status, setStatus] = useState<LoanStatus | "">("");
   const [type, setType] = useState<LoanType | "">("");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
@@ -143,6 +276,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport }: { refr
                       <strong>Agenda do contrato</strong>
                       <div className="loan-detail-actions">
                         <Button variant="secondary" onClick={() => onReport(loan)}><FileText size={17} /> Relatório</Button>
+                        {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setEditingLoan(loan)}><Pencil size={17} /> Editar contrato</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button onClick={() => onPayment(loan)}><CircleDollarSign size={17} /> Registrar pagamento</Button> : null}
                       </div>
                     </div>
@@ -156,6 +290,9 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport }: { refr
           })}
         </div>
       </section>
+
+      <EditLoanModal loan={editingLoan} onClose={() => setEditingLoan(null)} onSaved={() => { load(); onSaved?.("Empréstimo atualizado com sucesso."); }} />
     </div>
   );
 }
+
