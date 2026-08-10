@@ -135,10 +135,14 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
 
   if (!loan) return null;
 
-  const hasPayments = (loan.summary?.paidCount || 0) > 0 || (loan.payments?.length || 0) > 0;
-  const isWeekly = loan.type === "WEEKLY";
+  const paidCount = loan.summary?.paidCount || 0;
+  const paidAmountTotal = loan.installments
+    ? loan.installments.filter((i) => i.status === "PAID" || Number(i.paidAmount) > 0).reduce((sum, i) => sum + Number(i.paidAmount || i.amount || 0), 0)
+    : 0;
 
   const totalCalculated = isWeekly ? Number(installmentCount || 0) * Number(installmentAmount || 0) : Number(principalBalance || principalAmount || 0);
+  const remainingInstallmentsCount = isWeekly ? Math.max(0, Number(installmentCount || 0) - paidCount) : 0;
+  const remainingBalanceCalculated = isWeekly ? remainingInstallmentsCount * Number(installmentAmount || 0) : Number(principalBalance || 0);
   const monthlyInterestCalculated = isWeekly ? 0 : (rateMode === "percentage" ? (Number(principalBalance || principalAmount || 0) * Number(monthlyInterestRate || 0)) / 100 : Number(monthlyInterestAmount || 0));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -149,7 +153,6 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
 
     const body: Record<string, unknown> = {
       principalAmount: Number(principalAmount),
-      principalBalance: Number(principalBalance),
       lateFeePerDay: Number(lateFeePerDay),
     };
 
@@ -159,6 +162,7 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
       body.installmentAmount = Number(installmentAmount);
       body.firstDueDate = firstDueDate;
     } else {
+      body.principalBalance = Number(principalBalance);
       body.monthlyDueDay = Number(monthlyDueDay);
       if (rateMode === "percentage") {
         body.monthlyInterestRate = Number(monthlyInterestRate);
@@ -186,21 +190,28 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
       <form onSubmit={submit} className="form-grid loan-form">
         {hasPayments ? (
           <div className="field-span form-info-box">
-            <strong>Atenção ao renegociar:</strong> Este contrato possui pagamentos registrados. As cobranças já quitadas serão mantidas no histórico, e as alterações serão aplicadas ao saldo devedor e parcelas futuras.
+            <strong>Atenção ao renegociar:</strong> Este contrato possui pagamentos registrados ({paidCount} cobrança(s) já paga(s) totalizando {money(paidAmountTotal)}). O histórico pago é mantido e os novos valores serão aplicados às parcelas/cobranças futuras.
           </div>
         ) : null}
 
         <Field label="Valor Principal Inicial"><Input type="number" min="0.01" step="0.01" required value={principalAmount} onChange={(e) => setPrincipalAmount(e.target.value)} /></Field>
-        <Field label="Saldo Devedor Atual"><Input type="number" min="0" step="0.01" required value={principalBalance} onChange={(e) => setPrincipalBalance(e.target.value)} /></Field>
+        {isWeekly ? null : (
+          <Field label="Saldo Devedor Principal Atual"><Input type="number" min="0" step="0.01" required value={principalBalance} onChange={(e) => setPrincipalBalance(e.target.value)} /></Field>
+        )}
         <Field label="Multa por dia de atraso"><Input type="number" min="0" step="0.01" required value={lateFeePerDay} onChange={(e) => setLateFeePerDay(e.target.value)} /></Field>
 
         {isWeekly ? (
           <>
             <Field label="Frequência"><Select value={frequency} onChange={(e) => setFrequency(e.target.value as "WEEKLY" | "BIWEEKLY" | "MONTHLY")}><option value="WEEKLY">Semanal</option><option value="BIWEEKLY">Quinzenal</option><option value="MONTHLY">Mensal</option></Select></Field>
-            <Field label="Quantidade de parcelas"><Input type="number" min="1" required value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} /></Field>
+            <Field label="Quantidade total de parcelas"><Input type="number" min={Math.max(1, paidCount)} required value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} /></Field>
             <Field label="Valor da parcela"><Input type="number" min="0.01" step="0.01" required value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} placeholder="0,00" /></Field>
             <Field label="Primeiro vencimento"><Input type="date" required value={firstDueDate} onChange={(e) => setFirstDueDate(e.target.value)} /></Field>
-            <div className="contract-preview field-span"><span>Total contratado estimado</span><strong>{money(totalCalculated)}</strong><small>{installmentCount || 0} parcelas de {money(installmentAmount)}</small></div>
+            <div className="contract-preview field-span">
+              <span>Total contratado estimado: <strong>{money(totalCalculated)}</strong> ({installmentCount || 0} parcelas de {money(installmentAmount)})</span>
+              <small style={{ marginTop: 4, display: "block" }}>
+                Saldo a pagar restante: <strong>{money(remainingBalanceCalculated)}</strong> ({remainingInstallmentsCount} parcelas futuras de {money(installmentAmount)})
+              </small>
+            </div>
           </>
         ) : (
           <>
@@ -214,7 +225,7 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
             ) : (
               <Field label="Valor mensal de juros (R$)"><Input type="number" min="0.01" step="0.01" required value={monthlyInterestAmount} onChange={(e) => setMonthlyInterestAmount(e.target.value)} placeholder="Ex.: 1000,00" /></Field>
             )}
-            <div className="contract-preview field-span"><span>Juros mensal estimado</span><strong>{money(monthlyInterestCalculated)}</strong><small>{rateMode === "percentage" ? `Taxa de ${Number(monthlyInterestRate || 0).toLocaleString("pt-BR")}% sobre ${money(principalBalance || principalAmount)}` : `Juros fixos de ${money(monthlyInterestAmount)}`}</small></div>
+            <div className="contract-preview field-span"><span>Juros mensal estimado</span><strong>{money(monthlyInterestCalculated)}</strong><small>{rateMode === "percentage" ? `Taxa de ${Number(monthlyInterestRate || 0).toLocaleString("pt-BR")}% sobre o saldo de ${money(principalBalance || principalAmount)}` : `Juros fixos de ${money(monthlyInterestAmount)}`}</small></div>
           </>
         )}
 
