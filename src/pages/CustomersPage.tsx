@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { ChevronRight, FileText, IdCard, MapPin, Phone, Plus, Search, UsersRound } from "lucide-react";
+import { ChevronRight, FileText, IdCard, MapPin, Pencil, Phone, Plus, Search, UsersRound } from "lucide-react";
 import { api, queryString } from "../lib/api";
 import { date, money } from "../lib/format";
 import type { Customer, CustomerDetails, Loan } from "../types";
 import { Avatar, Button, EmptyState, ErrorState, Field, Input, LoadingState, Modal, PageHeader, StatusBadge, Textarea } from "../components/UI";
 
-function CustomerDetailModal({ customerId, onClose, onReport }: { customerId: string | null; onClose: () => void; onReport: (loan: Loan) => void }) {
+type EditableCustomer = Pick<Customer, "id" | "name" | "phone" | "cpf" | "address" | "notes">;
+
+function CustomerDetailModal({ customerId, onClose, onReport, onEdit }: { customerId: string | null; onClose: () => void; onReport: (loan: Loan) => void; onEdit: (customer: CustomerDetails) => void }) {
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
   const [error, setError] = useState("");
   const [reportLoading, setReportLoading] = useState<string | null>(null);
@@ -46,6 +48,7 @@ function CustomerDetailModal({ customerId, onClose, onReport }: { customerId: st
             </div>
             <span className="customer-profile-address"><MapPin size={15} /> {customer.address || "Endereço não informado"}</span>
           </div>
+          <Button className="customer-profile-edit" variant="secondary" onClick={() => onEdit(customer)}><Pencil size={16} /> Editar</Button>
         </div>
         <div className="customer-detail-stats">
           <div><span>Total emprestado</span><strong>{money(customer.stats.totalLent)}</strong></div>
@@ -79,6 +82,7 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<EditableCustomer | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
@@ -111,6 +115,27 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
       load();
     } catch (caught) {
       setFormError(caught instanceof Error ? caught.message : "Não foi possível salvar o cliente.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function updateCustomer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingCustomer) return;
+    const data = new FormData(event.currentTarget);
+    setSaving(true);
+    setFormError("");
+    try {
+      await api<Customer>(`/customers/${editingCustomer.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: data.get("name"), phone: data.get("phone"), cpf: data.get("cpf"), address: data.get("address"), notes: data.get("notes") }),
+      });
+      setEditingCustomer(null);
+      onCreated("Dados do cliente atualizados.");
+      load();
+    } catch (caught) {
+      setFormError(caught instanceof Error ? caught.message : "Não foi possível atualizar o cliente.");
     } finally {
       setSaving(false);
     }
@@ -170,7 +195,18 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
           <div className="form-actions field-span"><Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>Cancelar</Button><Button type="submit" loading={saving}>Salvar cliente</Button></div>
         </form>
       </Modal>
-      <CustomerDetailModal key={selectedCustomer || "closed"} customerId={selectedCustomer} onClose={() => setSelectedCustomer(null)} onReport={onReport} />
+      <Modal open={Boolean(editingCustomer)} onClose={() => !saving && setEditingCustomer(null)} title="Editar cliente" description="Atualize os dados de cadastro quando precisar." size="md">
+        {editingCustomer ? <form key={editingCustomer.id} onSubmit={updateCustomer} className="form-grid">
+          <Field label="Nome completo"><Input name="name" required minLength={2} defaultValue={editingCustomer.name} autoFocus /></Field>
+          <Field label="Telefone"><Input name="phone" required minLength={8} defaultValue={editingCustomer.phone} /></Field>
+          <Field label="CPF" hint="Opcional"><Input name="cpf" defaultValue={editingCustomer.cpf || ""} placeholder="000.000.000-00" /></Field>
+          <Field label="Endereço" hint="Opcional"><Input name="address" defaultValue={editingCustomer.address || ""} placeholder="Rua, número e bairro" /></Field>
+          <div className="field-span"><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={3} defaultValue={editingCustomer.notes || ""} placeholder="Informações úteis sobre o cliente" /></Field></div>
+          {formError ? <div className="form-error field-span">{formError}</div> : null}
+          <div className="form-actions field-span"><Button type="button" variant="ghost" onClick={() => setEditingCustomer(null)}>Cancelar</Button><Button type="submit" loading={saving}>Salvar alterações</Button></div>
+        </form> : null}
+      </Modal>
+      <CustomerDetailModal key={selectedCustomer || "closed"} customerId={selectedCustomer} onClose={() => setSelectedCustomer(null)} onReport={onReport} onEdit={(customer) => { setSelectedCustomer(null); setEditingCustomer(customer); setFormError(""); }} />
     </div>
   );
 }
