@@ -1,4 +1,13 @@
-import { useEffect, useId, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, Inbox, LoaderCircle, X } from "lucide-react";
 import type { ChargeStatus, LoanStatus } from "@/shared/types";
@@ -19,8 +28,13 @@ let modalPageState: {
 
 function lockPageBehindModal() {
   if (modalLockCount === 0) {
-    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
-    const currentPadding = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
+    const scrollbarWidth = Math.max(
+      0,
+      window.innerWidth - document.documentElement.clientWidth,
+    );
+    const currentPadding =
+      Number.parseFloat(window.getComputedStyle(document.body).paddingRight) ||
+      0;
     modalPageState = {
       bodyOverflow: document.body.style.overflow,
       bodyPaddingRight: document.body.style.paddingRight,
@@ -30,7 +44,8 @@ function lockPageBehindModal() {
     };
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    if (scrollbarWidth > 0) document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    if (scrollbarWidth > 0)
+      document.body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
     document.body.classList.add("modal-open");
     document.documentElement.classList.add("modal-open");
   }
@@ -42,17 +57,29 @@ function lockPageBehindModal() {
     document.body.style.overflow = modalPageState.bodyOverflow;
     document.body.style.paddingRight = modalPageState.bodyPaddingRight;
     document.documentElement.style.overflow = modalPageState.htmlOverflow;
-    if (!modalPageState.bodyHadClass) document.body.classList.remove("modal-open");
-    if (!modalPageState.htmlHadClass) document.documentElement.classList.remove("modal-open");
+    if (!modalPageState.bodyHadClass)
+      document.body.classList.remove("modal-open");
+    if (!modalPageState.htmlHadClass)
+      document.documentElement.classList.remove("modal-open");
     modalPageState = null;
   };
 }
 
-export function Button({ className = "", variant = "primary", loading, children, disabled, ...props }: ButtonProps) {
+export function Button({
+  className = "",
+  variant = "primary",
+  loading,
+  children,
+  disabled,
+  ...props
+}: ButtonProps) {
   const variants = {
-    primary: "bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-[0_8px_20px_rgba(109,67,220,0.24)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(109,67,220,0.3)]",
-    secondary: "border border-violet-100 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700",
-    ghost: "bg-transparent text-slate-500 hover:bg-violet-50 hover:text-violet-700",
+    primary:
+      "bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-[0_8px_20px_rgba(109,67,220,0.24)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(109,67,220,0.3)]",
+    secondary:
+      "border border-violet-100 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700",
+    ghost:
+      "bg-transparent text-slate-500 hover:bg-violet-50 hover:text-violet-700",
     danger: "bg-rose-500 text-white shadow-sm hover:bg-rose-600",
   } as const;
 
@@ -69,42 +96,121 @@ export function Button({ className = "", variant = "primary", loading, children,
   );
 }
 
-export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="mb-4 flex min-h-16 flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
       <div className="min-w-0">
-        {eyebrow ? <p className="m-0 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-violet-600">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">{title}</h1>
-        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p> : null}
+        {eyebrow ? (
+          <p className="m-0 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-violet-600">
+            {eyebrow}
+          </p>
+        ) : null}
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
+          {title}
+        </h1>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            {description}
+          </p>
+        ) : null}
       </div>
-      {action ? <div className="w-full sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">{action}</div> : null}
+      {action ? (
+        <div className="w-full print:hidden sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: ReactNode }) {
+export function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-semibold text-slate-700">{label}</span>
       {children}
-      {error ? <span className="text-xs text-rose-600">{error}</span> : hint ? <span className="text-xs leading-5 text-slate-400">{hint}</span> : null}
+      {error ? (
+        <span className="text-xs text-rose-600">{error}</span>
+      ) : hint ? (
+        <span className="text-xs leading-5 text-slate-400">{hint}</span>
+      ) : null}
     </label>
   );
 }
 
-export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input data-ui="input" className={`w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`} {...props} />;
+export function Input({
+  className = "",
+  ...props
+}: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      data-ui="input"
+      className={`w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select data-ui="input" className={`w-full min-w-0 appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`} {...props} />;
+export function Select({
+  className = "",
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      data-ui="input"
+      className={`w-full min-w-0 appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function Textarea({ className = "", ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea data-ui="textarea" className={`min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`} {...props} />;
+export function Textarea({
+  className = "",
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      data-ui="textarea"
+      className={`min-h-24 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function Modal({ open, onClose, title, description, children, size = "md" }: { open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode; size?: "sm" | "md" | "lg" }) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  size = "md",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  size?: "sm" | "md" | "lg";
+}) {
   const titleId = useId();
   const onCloseRef = useRef(onClose);
 
@@ -127,43 +233,104 @@ export function Modal({ open, onClose, title, description, children, size = "md"
 
   if (!open) return null;
   return createPortal(
-    <div data-modal-layer className="fixed inset-0 z-[100] grid min-h-dvh place-items-center overflow-hidden bg-slate-950/55 p-3 backdrop-blur-[2px] sm:p-5 print:static print:block print:min-h-0 print:overflow-visible print:bg-white print:p-0 print:backdrop-blur-none" role="dialog" aria-modal="true" aria-labelledby={titleId} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div data-modal className={`flex max-h-[min(90dvh,800px)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_25px_70px_rgba(26,20,39,0.25)] print:max-h-none print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none ${size === "sm" ? "max-w-md" : size === "lg" ? "max-w-4xl" : "max-w-2xl"}`}>
+    <div
+      data-modal-layer
+      className="fixed inset-0 z-[100] grid min-h-dvh place-items-center overflow-hidden bg-slate-950/55 p-3 backdrop-blur-[2px] sm:p-5 print:static print:block print:min-h-0 print:overflow-visible print:bg-white print:p-0 print:backdrop-blur-none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <div
+        data-modal
+        className={`flex max-h-[min(90dvh,800px)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_25px_70px_rgba(26,20,39,0.25)] print:max-h-none print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none ${size === "sm" ? "max-w-md" : size === "lg" ? "max-w-4xl" : "max-w-2xl"}`}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5 print:hidden">
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="break-words text-xl font-semibold tracking-tight text-slate-900">{title}</h2>
-            {description ? <p className="mt-1 break-words text-sm leading-6 text-slate-500">{description}</p> : null}
+            <h2
+              id={titleId}
+              className="break-words text-xl font-semibold tracking-tight text-slate-900"
+            >
+              {title}
+            </h2>
+            {description ? (
+              <p className="mt-1 break-words text-sm leading-6 text-slate-500">
+                {description}
+              </p>
+            ) : null}
           </div>
-          <button className="grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 transition hover:bg-violet-50 hover:text-violet-700" onClick={onClose} aria-label="Fechar"><X size={19} /></button>
+          <button
+            className="grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            <X size={19} />
+          </button>
         </div>
-        <div data-modal-body className="overflow-x-hidden overflow-y-auto p-5 sm:p-6 print:overflow-visible print:p-0">{children}</div>
+        <div
+          data-modal-body
+          className="overflow-x-hidden overflow-y-auto p-5 sm:p-6 print:overflow-visible print:p-0"
+        >
+          {children}
+        </div>
       </div>
     </div>,
     document.body,
   );
 }
 
-export function LoadingState({ label = "Carregando dados" }: { label?: string }) {
-  return <div className="flex min-h-44 items-center justify-center gap-2 p-7 text-sm text-slate-500"><LoaderCircle className="animate-spin text-violet-600" size={24} /><span>{label}</span></div>;
+export function LoadingState({
+  label = "Carregando dados",
+}: {
+  label?: string;
+}) {
+  return (
+    <div className="flex min-h-44 items-center justify-center gap-2 p-7 text-sm text-slate-500">
+      <LoaderCircle className="animate-spin text-violet-600" size={24} />
+      <span>{label}</span>
+    </div>
+  );
 }
 
-export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex min-h-44 flex-col items-center justify-center p-7 text-center">
-      <div className="grid size-12 place-items-center rounded-2xl bg-violet-50 text-violet-600"><Inbox size={24} /></div>
+      <div className="grid size-12 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+        <Inbox size={24} />
+      </div>
       <h3 className="mt-3 text-base font-semibold text-slate-700">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">
+        {description}
+      </p>
       {action}
     </div>
   );
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
   return (
     <div className="flex min-h-30 flex-wrap items-center justify-center gap-3 p-6 text-center text-sm text-rose-700">
       <AlertCircle size={21} />
       <span>{message}</span>
-      {onRetry ? <Button variant="ghost" onClick={onRetry}>Tentar novamente</Button> : null}
+      {onRetry ? (
+        <Button variant="ghost" onClick={onRetry}>
+          Tentar novamente
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -189,20 +356,68 @@ export function StatusBadge({ status }: { status: LoanStatus | ChargeStatus }) {
     CANCELLED: "bg-slate-100 text-slate-600",
   } as const;
 
-  return <span className={`inline-flex w-max items-center gap-1.5 rounded-full px-2 py-1 text-[0.65rem] font-bold leading-none whitespace-nowrap ${tones[status]}`}><i className="size-1 rounded-full bg-current" />{statusLabels[status]}</span>;
-}
-
-export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
-  const letters = name.split(" ").filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
-  const sizes = { sm: "size-8 rounded-lg text-[0.65rem]", md: "size-9 rounded-xl text-xs", lg: "size-12 rounded-2xl text-sm" } as const;
-  return <span data-ui="avatar" className={`inline-grid shrink-0 place-items-center border border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100 font-extrabold leading-none text-violet-700 ${sizes[size]}`}>{letters}</span>;
-}
-
-export function Toast({ message, tone = "success", onClose }: { message: string; tone?: "success" | "error"; onClose: () => void }) {
   return (
-    <div data-ui="toast" className={`fixed right-4 bottom-4 z-[150] flex max-w-[calc(100vw-2rem)] items-center gap-4 rounded-xl border-l-4 px-4 py-3 text-sm text-white shadow-2xl sm:right-6 sm:bottom-6 ${tone === "success" ? "border-emerald-400 bg-slate-900" : "border-rose-400 bg-slate-900"}`} role="status">
+    <span
+      className={`inline-flex w-max items-center gap-1.5 rounded-full px-2 py-1 text-[0.65rem] font-bold leading-none whitespace-nowrap ${tones[status]}`}
+    >
+      <i className="size-1 rounded-full bg-current" />
+      {statusLabels[status]}
+    </span>
+  );
+}
+
+export function Avatar({
+  name,
+  size = "md",
+}: {
+  name: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const letters = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+  const sizes = {
+    sm: "size-8 rounded-lg text-[0.65rem]",
+    md: "size-9 rounded-xl text-xs",
+    lg: "size-12 rounded-2xl text-sm",
+  } as const;
+  return (
+    <span
+      data-ui="avatar"
+      className={`inline-grid shrink-0 place-items-center border border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100 font-extrabold leading-none text-violet-700 ${sizes[size]}`}
+    >
+      {letters}
+    </span>
+  );
+}
+
+export function Toast({
+  message,
+  tone = "success",
+  onClose,
+}: {
+  message: string;
+  tone?: "success" | "error";
+  onClose: () => void;
+}) {
+  return (
+    <div
+      data-ui="toast"
+      className={`fixed right-4 bottom-4 z-[150] flex max-w-[calc(100vw-2rem)] items-center gap-4 rounded-xl border-l-4 px-4 py-3 text-sm text-white shadow-2xl print:hidden sm:right-6 sm:bottom-6 ${tone === "success" ? "border-emerald-400 bg-slate-900" : "border-rose-400 bg-slate-900"}`}
+      role="status"
+    >
       <span className="min-w-0 flex-1 break-words">{message}</span>
-      <button className="grid size-7 shrink-0 place-items-center rounded-lg text-slate-300 transition hover:bg-white/10 hover:text-white" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
+      <button
+        className="grid size-7 shrink-0 place-items-center rounded-lg text-slate-300 transition hover:bg-white/10 hover:text-white"
+        onClick={onClose}
+        aria-label="Fechar"
+      >
+        <X size={16} />
+      </button>
     </div>
   );
 }

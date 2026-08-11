@@ -9,12 +9,19 @@ export type Customer = {
   cpf?: string | null;
   address?: string | null;
   notes?: string | null;
-  loans?: Array<{ id: string; status: LoanStatus; principalBalance: string; totalContracted: string; openBalance: number }>;
+  loans?: Array<{
+    id: string;
+    status: LoanStatus;
+    principalBalance: string;
+    totalContracted: string;
+    openBalance: number;
+  }>;
   _count?: { loans: number };
 };
 
 export type LoanType = "WEEKLY" | "MONTHLY_INTEREST";
-export type LoanStatus = "ACTIVE" | "OVERDUE" | "PAID" | "RENEWED" | "CANCELLED";
+export type LoanStatus =
+  "ACTIVE" | "OVERDUE" | "PAID" | "RENEWED" | "CANCELLED";
 export type ChargeStatus = "PENDING" | "PAID" | "OVERDUE" | "PARTIAL";
 export type ReceiptKind = "LOAN_DISBURSEMENT" | "PAYMENT" | "RENEWAL";
 
@@ -106,6 +113,8 @@ export type CollectionItem = {
 export type Payment = {
   id: string;
   loanId: string;
+  installmentId?: string | null;
+  monthlyChargeId?: string | null;
   type: "INSTALLMENT" | "INTEREST" | "PRINCIPAL" | "PAYOFF" | "RENEWAL_ENTRY";
   amount: string;
   lateFeeAmount?: string;
