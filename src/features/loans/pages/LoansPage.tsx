@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Ban, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, Search } from "lucide-react";
+import { Ban, CalendarDays, ChevronDown, ChevronRight, CircleDollarSign, FileText, Filter, Pencil, Phone, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { chargeValues } from "@/shared/lib/charges";
 import { date, money, todayInput } from "@/shared/lib/format";
 import type { Customer, Loan, LoanStatus, LoanType } from "@/shared/types";
 import { Avatar, Button, EmptyState, ErrorState, Field, Input, LoadingState, Modal, PageHeader, Select, StatusBadge } from "@/shared/ui";
@@ -16,6 +17,12 @@ const contractPreviewClass = "grid min-w-0 grid-cols-1 gap-1 rounded-xl border b
 const typePickerClass = "grid min-w-0 grid-cols-1 gap-2 min-[641px]:grid-cols-2";
 const typeButtonBaseClass = "flex min-h-[74px] min-w-0 items-center gap-3 rounded-xl border p-3 text-left transition [&>span]:grid [&>span]:size-10 [&>span]:shrink-0 [&>span]:place-items-center [&>span]:rounded-xl [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&_strong]:text-xs [&_small]:mt-1 [&_small]:break-words [&_small]:text-[10px] [&_small]:leading-relaxed";
 const typeButtonClass = (selected: boolean) => `${typeButtonBaseClass} ${selected ? "border-violet-400 bg-violet-50 text-violet-700 ring-2 ring-violet-100 [&>span]:bg-white" : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 [&>span]:bg-slate-50 [&_small]:text-slate-500"}`;
+
+function futureDateInput(days: number) {
+  const value = new Date();
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
 
 export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (loan: Loan) => void }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -256,6 +263,140 @@ function CancelLoanModal({ loan, onClose, onCancelled }: { loan: Loan | null; on
   );
 }
 
+function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClose: () => void; onRenewed: () => void }) {
+  const [entryAmount, setEntryAmount] = useState("0");
+  const [newMoneyReleased, setNewMoneyReleased] = useState("");
+  const [installmentCount, setInstallmentCount] = useState(() => loan?.installmentCount?.toString() || "8");
+  const [installmentAmount, setInstallmentAmount] = useState("");
+  const [frequency, setFrequency] = useState<"WEEKLY" | "BIWEEKLY" | "MONTHLY">(() => loan?.frequency || "WEEKLY");
+  const [loanDate, setLoanDate] = useState(todayInput());
+  const [firstDueDate, setFirstDueDate] = useState(futureDateInput(7));
+  const [lateFeePerDay, setLateFeePerDay] = useState(() => loan?.lateFeePerDay || "0");
+  const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!loan) return null;
+
+  const previousBalance = Number(loan.summary.openBalance || 0);
+  const entry = Number(entryAmount || 0);
+  const refinancedAmount = Math.max(0, previousBalance - entry);
+  const newMoney = Number(newMoneyReleased || 0);
+  const newBase = refinancedAmount + newMoney;
+  const newContractTotal = Number(installmentCount || 0) * Number(installmentAmount || 0);
+  const contractIsEnough = newContractTotal >= newBase && newBase > 0;
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!loan) return;
+    if (entry > previousBalance) {
+      setError("A entrada não pode ser maior que o saldo atual.");
+      return;
+    }
+    if (!contractIsEnough) {
+      setError("O total das novas parcelas precisa cobrir a base do novo contrato.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      await loansService.renew(loan.id, {
+        entryAmount: entry,
+        newMoneyReleased: newMoney,
+        installmentCount: Number(installmentCount),
+        installmentAmount: Number(installmentAmount),
+        lateFeePerDay: Number(lateFeePerDay),
+        loanDate,
+        firstDueDate,
+        frequency,
+        paymentMethod,
+      });
+      onRenewed();
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível renovar o empréstimo.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open={Boolean(loan)} onClose={onClose} title="Renovar empréstimo" description={`Novo contrato para ${loan.customer.name}`} size="lg">
+      <form className={`${formGridClass} loan-renewal-form`} onSubmit={submit}>
+        <div className={`${fieldSpanClass} rounded-xl border border-violet-100 bg-violet-50/70 px-4 py-3 text-xs leading-relaxed text-slate-600`}>
+          O saldo restante será levado para um novo contrato. No caixa, será registrada como saída somente a quantia adicional entregue ao cliente.
+        </div>
+
+        <Field label="Saldo atual"><Input value={money(previousBalance)} disabled /></Field>
+        <Field label="Entrada na renovação" hint="Valor pago agora para reduzir o saldo antigo"><Input type="number" min="0" max={previousBalance} step="0.01" value={entryAmount} onChange={(event) => setEntryAmount(event.target.value)} /></Field>
+        <Field label="Dinheiro novo entregue" hint="Somente este valor será lançado como saída no caixa"><Input type="number" min="0" step="0.01" required value={newMoneyReleased} onChange={(event) => setNewMoneyReleased(event.target.value)} placeholder="Ex.: 600,00" /></Field>
+        <Field label="Forma de pagamento da entrada"><Select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} disabled={entry <= 0}><option value="PIX">Pix</option><option value="CASH">Dinheiro</option><option value="TRANSFER">Transferência</option><option value="OTHER">Outro</option></Select></Field>
+        <Field label="Quantidade de novas parcelas"><Input type="number" min="1" required value={installmentCount} onChange={(event) => setInstallmentCount(event.target.value)} /></Field>
+        <Field label="Valor de cada parcela"><Input type="number" min="0.01" step="0.01" required value={installmentAmount} onChange={(event) => setInstallmentAmount(event.target.value)} placeholder="0,00" /></Field>
+        <Field label="Frequência"><Select value={frequency} onChange={(event) => setFrequency(event.target.value as "WEEKLY" | "BIWEEKLY" | "MONTHLY")}><option value="WEEKLY">Semanal</option><option value="BIWEEKLY">Quinzenal</option><option value="MONTHLY">Mensal</option></Select></Field>
+        <Field label="Multa por dia"><Input type="number" min="0" step="0.01" required value={lateFeePerDay} onChange={(event) => setLateFeePerDay(event.target.value)} /></Field>
+        <Field label="Data da renovação"><Input type="date" required value={loanDate} onChange={(event) => setLoanDate(event.target.value)} /></Field>
+        <Field label="Primeiro vencimento"><Input type="date" min={loanDate} required value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)} /></Field>
+
+        <div className={`${fieldSpanClass} grid min-w-0 grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 min-[421px]:grid-cols-2 min-[641px]:grid-cols-3 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&_span]:text-[9.5px] [&_span]:text-slate-500 [&_strong]:mt-1 [&_strong]:break-words [&_strong]:text-[13px]`}>
+          <div><span>Saldo anterior</span><strong>{money(previousBalance)}</strong></div>
+          <div><span>Menos entrada</span><strong>− {money(entry)}</strong></div>
+          <div><span>Saldo refinanciado</span><strong>{money(refinancedAmount)}</strong></div>
+          <div><span>Dinheiro novo</span><strong>+ {money(newMoney)}</strong></div>
+          <div className="rounded-lg bg-violet-100 px-2.5 py-2 text-violet-800"><span>Base do novo contrato</span><strong>{money(newBase)}</strong></div>
+          <div className={`rounded-lg px-2.5 py-2 ${contractIsEnough ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}><span>Total das parcelas</span><strong>{money(newContractTotal)}</strong></div>
+        </div>
+
+        {!contractIsEnough && installmentAmount ? <p className={`${fieldSpanClass} m-0 text-xs text-rose-600`}>O total das parcelas está {money(newBase - newContractTotal)} abaixo da base do novo contrato.</p> : null}
+        {error ? <div className={`${fieldSpanClass} ${formErrorClass} form-error`}>{error}</div> : null}
+        <div className={`${fieldSpanClass} ${formActionsClass} form-actions`}>
+          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" loading={saving} disabled={!contractIsEnough}><RefreshCw size={17} /> Confirmar renovação</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function DeleteLoanModal({ loan, onClose, onDeleted }: { loan: Loan | null; onClose: () => void; onDeleted: () => void }) {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!loan) return null;
+
+  async function confirmDelete() {
+    if (!loan) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await loansService.remove(loan.id);
+      onDeleted();
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível excluir o empréstimo.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Modal open={Boolean(loan)} onClose={onClose} title="Excluir empréstimo" description={`Cliente: ${loan.customer.name}`} size="sm">
+      <div className="flex min-w-0 flex-col gap-3.5">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] leading-relaxed text-rose-800">
+          <strong className="mb-1 block">Esta ação é permanente.</strong>
+          O contrato de <strong>{money(loan.principalAmount)}</strong>, suas cobranças, pagamentos e movimentações de caixa vinculadas serão excluídos. Não será possível recuperar esses dados.
+        </div>
+        {error ? <div className={`${formErrorClass} form-error`}>{error}</div> : null}
+        <div className={`${formActionsClass} form-actions`}>
+          <Button variant="ghost" onClick={onClose}>Voltar</Button>
+          <Button variant="danger" loading={deleting} onClick={confirmDelete}><Trash2 size={17} /> Excluir permanentemente</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void; onSaved?: (message: string) => void }) {
   const [status, setStatus] = useState<LoanStatus | "">("");
   const [type, setType] = useState<LoanType | "">("");
@@ -263,6 +404,8 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [cancellingLoan, setCancellingLoan] = useState<Loan | null>(null);
+  const [renewingLoan, setRenewingLoan] = useState<Loan | null>(null);
+  const [deletingLoan, setDeletingLoan] = useState<Loan | null>(null);
   const { loans, error, reload: load } = useLoans(status, type, refreshKey);
 
   const filtered = useMemo(() => loans?.filter((loan) => loan.customer.name.toLowerCase().includes(search.toLowerCase())) || [], [loans, search]);
@@ -302,12 +445,29 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
                       <div className="loan-detail-actions grid w-full min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:w-auto min-[641px]:flex-wrap min-[641px]:justify-end [&>button]:w-full min-[641px]:[&>button]:w-auto min-[641px]:[&>button]:min-h-9 min-[641px]:[&>button]:px-3 min-[641px]:[&>button]:py-2 min-[641px]:[&>button]:text-xs">
                         <Button variant="secondary" onClick={() => onReport(loan)}><FileText size={17} /> Relatório</Button>
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setEditingLoan(loan)}><Pencil size={17} /> Editar contrato</Button> : null}
+                        {loan.type === "WEEKLY" && ["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setRenewingLoan(loan)}><RefreshCw size={17} /> Renovar</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setCancellingLoan(loan)}><Ban size={17} /> Cancelar</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button onClick={() => onPayment(loan)}><CircleDollarSign size={17} /> Registrar pagamento</Button> : null}
+                        <Button variant="danger" onClick={() => setDeletingLoan(loan)}><Trash2 size={17} /> Excluir</Button>
                       </div>
                     </div>
                     <div className="schedule-grid grid min-w-0 grid-cols-1 gap-2 min-[641px]:grid-cols-2 min-[861px]:grid-cols-3">
-                      {charges.slice(0, 12).map((charge) => <div className="schedule-item grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border border-[#ebe8ef] bg-white px-3 py-2.5" key={charge.id}><span className="text-[10px] font-extrabold text-violet-600">{charge.number ? `#${charge.number}` : charge.referenceMonth}</span><div className="flex min-w-0 flex-col"><strong className="overflow-hidden text-xs text-ellipsis whitespace-nowrap">{money(charge.amount || charge.interestAmount)}</strong><small className="mt-1 text-[9.5px] text-[#9995a1]">{date(charge.dueDate)}</small></div><StatusBadge status={charge.status} /></div>)}
+                      {charges.slice(0, 12).map((charge) => {
+                        const values = chargeValues(charge, loan.lateFeePerDay);
+                        const hasLateFee = values.lateFee > 0;
+
+                        return (
+                          <div className={`schedule-item grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border bg-white px-3 py-2.5 ${hasLateFee ? "border-rose-200" : "border-[#ebe8ef]"}`} key={charge.id}>
+                            <span className={`text-[10px] font-extrabold ${hasLateFee ? "text-rose-600" : "text-violet-600"}`}>{charge.number ? `#${charge.number}` : charge.referenceMonth}</span>
+                            <div className="flex min-w-0 flex-col">
+                              <strong className="overflow-hidden text-xs text-ellipsis whitespace-nowrap">{money(hasLateFee ? values.updatedAmount : charge.amount || charge.interestAmount)}</strong>
+                              <small className="mt-1 text-[9.5px] text-[#9995a1]">{date(charge.dueDate)}</small>
+                              {hasLateFee ? <small className="mt-1 break-words text-[9px] font-semibold leading-snug text-rose-600">+{money(values.lateFee)} juros ({values.overdue}d)</small> : null}
+                            </div>
+                            <StatusBadge status={charge.status} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}
@@ -319,6 +479,8 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
 
       <EditLoanModal key={editingLoan?.id || "closed"} loan={editingLoan} onClose={() => setEditingLoan(null)} onSaved={() => { load(); onSaved?.("Empréstimo atualizado com sucesso."); }} />
       <CancelLoanModal loan={cancellingLoan} onClose={() => setCancellingLoan(null)} onCancelled={() => { load(); onSaved?.("Contrato cancelado."); }} />
+      <RenewLoanModal key={renewingLoan?.id || "closed"} loan={renewingLoan} onClose={() => setRenewingLoan(null)} onRenewed={() => { setExpanded(null); load(); onSaved?.("Empréstimo renovado e nova agenda criada."); }} />
+      <DeleteLoanModal loan={deletingLoan} onClose={() => setDeletingLoan(null)} onDeleted={() => { setExpanded(null); load(); onSaved?.("Empréstimo excluído permanentemente."); }} />
     </div>
   );
 }

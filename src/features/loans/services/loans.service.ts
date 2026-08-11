@@ -8,4 +8,6 @@ export const loansService = {
   create: (payload: Record<string, unknown>) => api<Loan>("/loans", { method: "POST", body: JSON.stringify(payload) }),
   update: (id: string, payload: Record<string, unknown>) => api<Loan>(`/loans/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   cancel: (id: string) => api<{ success: boolean }>(`/loans/${id}/cancel`, { method: "POST" }),
+  remove: (id: string) => api<{ success: boolean }>(`/loans/${id}`, { method: "DELETE" }),
+  renew: (id: string, payload: Record<string, unknown>) => api<Loan>(`/renewals/${id}`, { method: "POST", body: JSON.stringify(payload) }),
 };
