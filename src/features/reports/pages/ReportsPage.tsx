@@ -97,32 +97,34 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
           </Button>
         }
       />
-      <div className="report-filter panel mb-[17px] flex min-w-0 flex-col items-stretch gap-3 rounded-[14px] border border-[#e9e7ef] bg-white px-4 py-3 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[641px]:flex-row min-[641px]:items-end min-[641px]:gap-[9px]">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] text-[#625d6c] min-[641px]:mb-3 min-[641px]:mr-auto">
-          <CalendarRange className="shrink-0" size={18} />
-          <strong>Período da análise</strong>
+      <div className="report-filter panel mb-[17px] grid min-w-0 max-w-full grid-cols-2 items-end gap-x-2 gap-y-2.5 overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white p-3 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[641px]:flex min-[641px]:items-end min-[641px]:gap-[9px] min-[641px]:overflow-visible min-[641px]:px-4">
+        <div className="order-1 flex min-w-0 items-center gap-1.5 text-[10.5px] text-[#625d6c] min-[641px]:mb-3 min-[641px]:mr-auto min-[641px]:text-[11px]">
+          <CalendarRange className="shrink-0" size={16} />
+          <strong>
+            Período<span className="hidden min-[641px]:inline"> da análise</span>
+          </strong>
         </div>
-        <label className="flex min-w-0 flex-col gap-1.5 min-[641px]:w-[150px]">
-          <span className="text-[10px] font-semibold text-slate-500">
+        <label className="order-3 flex w-full min-w-0 max-w-full flex-col gap-1 overflow-hidden min-[641px]:order-2 min-[641px]:w-[150px] min-[641px]:gap-1.5">
+          <span className="truncate text-[9px] font-semibold text-slate-500 min-[641px]:text-[10px]">
             Data inicial
           </span>
           <Input
-            className="w-full"
+            className="block w-full min-w-0 max-w-full !px-2 text-[12px]"
             type="date"
             max={to || undefined}
             value={from}
             onChange={(event) => changeFrom(event.target.value)}
           />
         </label>
-        <span className="hidden pb-3 text-[9.5px] text-[#9d98a4] min-[641px]:block">
+        <span className="order-3 hidden pb-3 text-[9.5px] text-[#9d98a4] min-[641px]:block">
           até
         </span>
-        <label className="flex min-w-0 flex-col gap-1.5 min-[641px]:w-[150px]">
-          <span className="text-[10px] font-semibold text-slate-500">
+        <label className="order-4 flex w-full min-w-0 max-w-full flex-col gap-1 overflow-hidden min-[641px]:w-[150px] min-[641px]:gap-1.5">
+          <span className="truncate text-[9px] font-semibold text-slate-500 min-[641px]:text-[10px]">
             Data final
           </span>
           <Input
-            className="w-full"
+            className="block w-full min-w-0 max-w-full !px-2 text-[12px]"
             type="date"
             min={from || undefined}
             value={to}
@@ -131,13 +133,13 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
         </label>
         <button
           type="button"
-          className="min-h-11 w-full rounded-lg border-0 bg-violet-50 px-3 py-2.5 text-[11px] font-bold text-violet-700 min-[641px]:mb-0 min-[641px]:min-h-[42px] min-[641px]:w-auto min-[641px]:bg-transparent"
+          className="order-2 min-h-8 w-auto justify-self-end rounded-lg border-0 bg-transparent px-1.5 py-1 text-[9.5px] font-bold text-violet-700 min-[641px]:order-5 min-[641px]:min-h-[42px] min-[641px]:px-3 min-[641px]:py-2.5 min-[641px]:text-[11px]"
           onClick={() => {
             setFrom("");
             setTo("");
           }}
         >
-          Todo o período
+          Todo período
         </button>
       </div>
       {!data && !error ? <LoadingState /> : null}
