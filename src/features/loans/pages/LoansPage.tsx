@@ -8,6 +8,9 @@ import { useLoans } from "../hooks/useLoans";
 import { loansService } from "../services/loans.service";
 import { LoanProgress } from "../components/LoanProgress";
 import { customersService } from "@/features/customers/services/customers.service";
+import { ReceiptList } from "@/features/receipts/components/ReceiptList";
+import { ReceiptUploadField } from "@/features/receipts/components/ReceiptUploadField";
+import { receiptsService } from "@/features/receipts/services/receipts.service";
 
 const formGridClass = "grid min-w-0 grid-cols-1 gap-4 min-[641px]:grid-cols-2";
 const fieldSpanClass = "min-w-0 min-[641px]:col-span-2";
@@ -24,13 +27,14 @@ function futureDateInput(days: number) {
   return value.toISOString().slice(0, 10);
 }
 
-export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (loan: Loan) => void }) {
+export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (loan: Loan, receiptWarning?: string) => void }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [type, setType] = useState<LoanType>("WEEKLY");
   const [principal, setPrincipal] = useState("");
   const [installments, setInstallments] = useState("10");
   const [installmentAmount, setInstallmentAmount] = useState("");
   const [rate, setRate] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -64,11 +68,20 @@ export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onC
           monthlyInterestRate: numeric("monthlyInterestRate"),
         }),
       });
-      onCreated(created);
+      let receiptWarning: string | undefined;
+      if (receiptFile) {
+        try {
+          await receiptsService.upload(created.id, receiptFile, "LOAN_DISBURSEMENT");
+        } catch (caught) {
+          receiptWarning = `Empréstimo criado, mas o comprovante não foi salvo: ${caught instanceof Error ? caught.message : "erro no armazenamento"}`;
+        }
+      }
+      onCreated(created, receiptWarning);
       onClose();
       setPrincipal("");
       setInstallmentAmount("");
       setRate("");
+      setReceiptFile(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível criar o empréstimo.");
     } finally {
@@ -101,6 +114,7 @@ export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onC
             <Field label="Dia do vencimento"><Input name="monthlyDueDay" type="number" min="1" max="31" required defaultValue="10" /></Field>
             <div className={`${fieldSpanClass} ${contractPreviewClass} contract-preview`}><span>Juros mensal estimado</span><strong>{money(monthlyInterest)}</strong><small>Taxa de {Number(rate || 0).toLocaleString("pt-BR")}% sobre {money(principal)}</small></div>
           </>}
+          <div className={fieldSpanClass}><ReceiptUploadField label="Comprovante do dinheiro emprestado" file={receiptFile} onChange={setReceiptFile} /></div>
           {error ? <div className={`${fieldSpanClass} ${formErrorClass} form-error`}>{error}</div> : null}
           <div className={`${fieldSpanClass} ${formActionsClass} form-actions`}><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Criar empréstimo</Button></div>
         </form>
@@ -263,7 +277,7 @@ function CancelLoanModal({ loan, onClose, onCancelled }: { loan: Loan | null; on
   );
 }
 
-function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClose: () => void; onRenewed: () => void }) {
+function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClose: () => void; onRenewed: (receiptWarning?: string) => void }) {
   const [entryAmount, setEntryAmount] = useState("0");
   const [newMoneyReleased, setNewMoneyReleased] = useState("");
   const [installmentCount, setInstallmentCount] = useState(() => loan?.installmentCount?.toString() || "8");
@@ -273,12 +287,13 @@ function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClo
   const [firstDueDate, setFirstDueDate] = useState(futureDateInput(7));
   const [lateFeePerDay, setLateFeePerDay] = useState(() => loan?.lateFeePerDay || "0");
   const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   if (!loan) return null;
 
-  const previousBalance = Number(loan.summary.openBalance || 0);
+  const previousBalance = Number(loan.principalBalance || 0);
   const entry = Number(entryAmount || 0);
   const refinancedAmount = Math.max(0, previousBalance - entry);
   const newMoney = Number(newMoneyReleased || 0);
@@ -301,7 +316,7 @@ function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClo
     setSaving(true);
     setError("");
     try {
-      await loansService.renew(loan.id, {
+      const renewed = await loansService.renew(loan.id, {
         entryAmount: entry,
         newMoneyReleased: newMoney,
         installmentCount: Number(installmentCount),
@@ -312,7 +327,15 @@ function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClo
         frequency,
         paymentMethod,
       });
-      onRenewed();
+      let receiptWarning: string | undefined;
+      if (receiptFile) {
+        try {
+          await receiptsService.upload(renewed.id, receiptFile, "RENEWAL");
+        } catch (caught) {
+          receiptWarning = `Renovação concluída, mas o comprovante não foi salvo: ${caught instanceof Error ? caught.message : "erro no armazenamento"}`;
+        }
+      }
+      onRenewed(receiptWarning);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível renovar o empréstimo.");
@@ -328,7 +351,7 @@ function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClo
           O saldo restante será levado para um novo contrato. No caixa, será registrada como saída somente a quantia adicional entregue ao cliente.
         </div>
 
-        <Field label="Saldo atual"><Input value={money(previousBalance)} disabled /></Field>
+        <Field label="Saldo principal restante"><Input value={money(previousBalance)} disabled /></Field>
         <Field label="Entrada na renovação" hint="Valor pago agora para reduzir o saldo antigo"><Input type="number" min="0" max={previousBalance} step="0.01" value={entryAmount} onChange={(event) => setEntryAmount(event.target.value)} /></Field>
         <Field label="Dinheiro novo entregue" hint="Somente este valor será lançado como saída no caixa"><Input type="number" min="0" step="0.01" required value={newMoneyReleased} onChange={(event) => setNewMoneyReleased(event.target.value)} placeholder="Ex.: 600,00" /></Field>
         <Field label="Forma de pagamento da entrada"><Select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} disabled={entry <= 0}><option value="PIX">Pix</option><option value="CASH">Dinheiro</option><option value="TRANSFER">Transferência</option><option value="OTHER">Outro</option></Select></Field>
@@ -338,9 +361,10 @@ function RenewLoanModal({ loan, onClose, onRenewed }: { loan: Loan | null; onClo
         <Field label="Multa por dia"><Input type="number" min="0" step="0.01" required value={lateFeePerDay} onChange={(event) => setLateFeePerDay(event.target.value)} /></Field>
         <Field label="Data da renovação"><Input type="date" required value={loanDate} onChange={(event) => setLoanDate(event.target.value)} /></Field>
         <Field label="Primeiro vencimento"><Input type="date" min={loanDate} required value={firstDueDate} onChange={(event) => setFirstDueDate(event.target.value)} /></Field>
+        <div className={fieldSpanClass}><ReceiptUploadField label="Comprovante do dinheiro novo entregue" file={receiptFile} onChange={setReceiptFile} /></div>
 
         <div className={`${fieldSpanClass} grid min-w-0 grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 min-[421px]:grid-cols-2 min-[641px]:grid-cols-3 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&_span]:text-[9.5px] [&_span]:text-slate-500 [&_strong]:mt-1 [&_strong]:break-words [&_strong]:text-[13px]`}>
-          <div><span>Saldo anterior</span><strong>{money(previousBalance)}</strong></div>
+          <div><span>Saldo principal restante</span><strong>{money(previousBalance)}</strong></div>
           <div><span>Menos entrada</span><strong>− {money(entry)}</strong></div>
           <div><span>Saldo refinanciado</span><strong>{money(refinancedAmount)}</strong></div>
           <div><span>Dinheiro novo</span><strong>+ {money(newMoney)}</strong></div>
@@ -397,7 +421,7 @@ function DeleteLoanModal({ loan, onClose, onDeleted }: { loan: Loan | null; onCl
   );
 }
 
-export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void; onSaved?: (message: string) => void }) {
+export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved, onWarning }: { refreshKey: number; onNewLoan: () => void; onPayment: (loan: Loan) => void; onReport: (loan: Loan) => void; onSaved?: (message: string) => void; onWarning?: (message: string) => void }) {
   const [status, setStatus] = useState<LoanStatus | "">("");
   const [type, setType] = useState<LoanType | "">("");
   const [search, setSearch] = useState("");
@@ -469,6 +493,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
                         );
                       })}
                     </div>
+                    <ReceiptList receipts={loan.receipts || []} onChanged={load} />
                   </div>
                 ) : null}
               </article>
@@ -479,7 +504,7 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
 
       <EditLoanModal key={editingLoan?.id || "closed"} loan={editingLoan} onClose={() => setEditingLoan(null)} onSaved={() => { load(); onSaved?.("Empréstimo atualizado com sucesso."); }} />
       <CancelLoanModal loan={cancellingLoan} onClose={() => setCancellingLoan(null)} onCancelled={() => { load(); onSaved?.("Contrato cancelado."); }} />
-      <RenewLoanModal key={renewingLoan?.id || "closed"} loan={renewingLoan} onClose={() => setRenewingLoan(null)} onRenewed={() => { setExpanded(null); load(); onSaved?.("Empréstimo renovado e nova agenda criada."); }} />
+      <RenewLoanModal key={renewingLoan?.id || "closed"} loan={renewingLoan} onClose={() => setRenewingLoan(null)} onRenewed={(receiptWarning) => { setExpanded(null); load(); if (receiptWarning) onWarning?.(receiptWarning); else onSaved?.("Empréstimo renovado e nova agenda criada."); }} />
       <DeleteLoanModal loan={deletingLoan} onClose={() => setDeletingLoan(null)} onDeleted={() => { setExpanded(null); load(); onSaved?.("Empréstimo excluído permanentemente."); }} />
     </div>
   );

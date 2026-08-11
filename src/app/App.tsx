@@ -10,6 +10,7 @@ import { CustomersPage } from "@/features/customers/pages/CustomersPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { LoanFormModal, LoansPage } from "@/features/loans/pages/LoansPage";
 import { ReportsPage } from "@/features/reports/pages/ReportsPage";
+import { StorageQuotaBanner } from "@/features/receipts/components/StorageQuotaBanner";
 import type { AuthSession, CollectionItem, Loan, User } from "@/shared/types";
 
 type ToastState = { message: string; tone: "success" | "error" } | null;
@@ -65,12 +66,18 @@ function App() {
     setToast({ message, tone: "success" });
   }
 
+  function warned(message: string) {
+    setRefreshKey((value) => value + 1);
+    setToast({ message, tone: "error" });
+  }
+
   function payLoan(loan: Loan) {
     setPaymentTarget({ loanId: loan.id });
   }
 
-  function loanCreated(loan: Loan) {
-    saved("Empréstimo criado e agenda de cobranças gerada.");
+  function loanCreated(loan: Loan, receiptWarning?: string) {
+    if (receiptWarning) warned(receiptWarning);
+    else saved("Empréstimo criado e agenda de cobranças gerada.");
     setReportLoan(loan);
   }
 
@@ -83,15 +90,16 @@ function App() {
   return (
     <>
       <AppShell page={page} onNavigate={setPage} user={user} onLogout={logout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} onSearch={(query) => { setCustomerSearch(query); setPage("customers"); }}>
+        <StorageQuotaBanner refreshKey={refreshKey} />
         {page === "dashboard" ? <DashboardPage refreshKey={refreshKey} onNavigate={setPage} onNewLoan={() => setLoanModalOpen(true)} /> : null}
         {page === "customers" ? <CustomersPage key={customerSearch} refreshKey={refreshKey} onCreated={saved} onReport={setReportLoan} externalSearch={customerSearch} /> : null}
-        {page === "loans" ? <LoansPage refreshKey={refreshKey} onNewLoan={() => setLoanModalOpen(true)} onPayment={payLoan} onReport={setReportLoan} onSaved={saved} /> : null}
+        {page === "loans" ? <LoansPage refreshKey={refreshKey} onNewLoan={() => setLoanModalOpen(true)} onPayment={payLoan} onReport={setReportLoan} onSaved={saved} onWarning={warned} /> : null}
         {page === "collections" ? <CollectionsPage refreshKey={refreshKey} onPayment={(preset) => setPaymentTarget({ loanId: preset.loanId, preset })} /> : null}
         {page === "cash" ? <CashPage refreshKey={refreshKey} onSaved={saved} /> : null}
         {page === "reports" ? <ReportsPage refreshKey={refreshKey} /> : null}
       </AppShell>
       <LoanFormModal open={loanModalOpen} onClose={() => setLoanModalOpen(false)} onCreated={loanCreated} />
-      {paymentTarget ? <PaymentModal loanId={paymentTarget.loanId} preset={paymentTarget.preset} onClose={() => setPaymentTarget(null)} onSaved={saved} /> : null}
+      {paymentTarget ? <PaymentModal loanId={paymentTarget.loanId} preset={paymentTarget.preset} onClose={() => setPaymentTarget(null)} onSaved={saved} onWarning={warned} /> : null}
       <LoanReportModal loan={reportLoan} onClose={() => setReportLoan(null)} />
       {toast ? <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} /> : null}
     </>

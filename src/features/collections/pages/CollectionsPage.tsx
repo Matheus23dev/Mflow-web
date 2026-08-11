@@ -6,6 +6,8 @@ import { Avatar, Button, EmptyState, ErrorState, Field, Input, LoadingState, Mod
 import { useCollections } from "../hooks/useCollections";
 import { collectionsService } from "../services/collections.service";
 import { CollectionSummaryCard } from "../components/CollectionSummaryCard";
+import { ReceiptUploadField } from "@/features/receipts/components/ReceiptUploadField";
+import { receiptsService } from "@/features/receipts/services/receipts.service";
 
 type PaymentType = Payment["type"];
 
@@ -22,11 +24,13 @@ function accruedLateFee(dueDate: string, lateFeePerDay: string) {
   return days * Number(lateFeePerDay || 0);
 }
 
-export function PaymentModal({ loanId, preset, onClose, onSaved }: { loanId: string | null; preset?: CollectionItem | null; onClose: () => void; onSaved: (message: string) => void }) {
+export function PaymentModal({ loanId, preset, onClose, onSaved, onWarning }: { loanId: string | null; preset?: CollectionItem | null; onClose: () => void; onSaved: (message: string) => void; onWarning: (message: string) => void }) {
   const [loan, setLoan] = useState<Loan | null>(null);
   const [paymentType, setPaymentType] = useState<PaymentType>("INSTALLMENT");
   const [chargeId, setChargeId] = useState("");
   const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<Payment["paymentMethod"]>("PIX");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -72,17 +76,31 @@ export function PaymentModal({ loanId, preset, onClose, onSaved }: { loanId: str
     setSaving(true);
     setError("");
     try {
-      await collectionsService.receive({
+      const payment = await collectionsService.receive({
         loanId: loan.id,
         type: paymentType,
         amount: Number(amount),
         paymentDate: data.get("paymentDate"),
-        paymentMethod: data.get("paymentMethod"),
+        paymentMethod,
         notes: data.get("notes"),
         ...(paymentType === "INSTALLMENT" ? { installmentId: chargeId } : {}),
         ...(paymentType === "INTEREST" ? { monthlyChargeId: chargeId } : {}),
       });
-      onSaved("Pagamento registrado e caixa atualizado.");
+      let warning: string | undefined;
+      let successMessage = "Pagamento registrado e caixa atualizado.";
+      if (receiptFile) {
+        if (payment.loanStatus && !["ACTIVE", "OVERDUE"].includes(payment.loanStatus)) {
+          successMessage = "Pagamento registrado. Como o contrato foi encerrado, nenhum comprovante foi mantido.";
+        } else {
+          try {
+            await receiptsService.upload(loan.id, receiptFile, "PAYMENT", payment.id);
+          } catch (caught) {
+            warning = `Pagamento registrado, mas o comprovante não foi salvo: ${caught instanceof Error ? caught.message : "erro no armazenamento"}`;
+          }
+        }
+      }
+      if (warning) onWarning(warning);
+      else onSaved(successMessage);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível registrar o pagamento.");
@@ -108,7 +126,8 @@ export function PaymentModal({ loanId, preset, onClose, onSaved }: { loanId: str
           ) : null}
           <Field label="Valor recebido"><Input type="number" min="0.01" step="0.01" required value={amount} onChange={(event) => setAmount(event.target.value)} /></Field>
           <Field label="Data do pagamento"><Input name="paymentDate" type="date" defaultValue={todayInput()} required /></Field>
-          <div className={fieldSpanClass}><Field label="Forma de pagamento"><Select name="paymentMethod" defaultValue="PIX"><option value="PIX">Pix</option><option value="CASH">Dinheiro</option><option value="TRANSFER">Transferência</option><option value="OTHER">Outro</option></Select></Field></div>
+          <div className={fieldSpanClass}><Field label="Forma de pagamento"><Select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as Payment["paymentMethod"])}><option value="PIX">Pix</option><option value="CASH">Dinheiro</option><option value="TRANSFER">Transferência</option><option value="OTHER">Outro</option></Select></Field></div>
+          <div className={fieldSpanClass}><ReceiptUploadField label="Comprovante do pagamento" file={receiptFile} onChange={setReceiptFile} /></div>
           <div className={fieldSpanClass}><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={2} placeholder="Ex.: pagamento combinado por mensagem" /></Field></div>
           {error ? <div className={`${fieldSpanClass} form-error rounded-lg border border-rose-200 bg-rose-50 px-[11px] py-[9px] text-[11px] leading-relaxed text-rose-700`}>{error}</div> : null}
           <div className={`${fieldSpanClass} ${formActionsClass}`}><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Confirmar pagamento</Button></div>

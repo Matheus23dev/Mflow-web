@@ -16,6 +16,31 @@ export type Customer = {
 export type LoanType = "WEEKLY" | "MONTHLY_INTEREST";
 export type LoanStatus = "ACTIVE" | "OVERDUE" | "PAID" | "RENEWED" | "CANCELLED";
 export type ChargeStatus = "PENDING" | "PAID" | "OVERDUE" | "PARTIAL";
+export type ReceiptKind = "LOAN_DISBURSEMENT" | "PAYMENT" | "RENEWAL";
+
+export type Receipt = {
+  id: string;
+  loanId: string;
+  paymentId?: string | null;
+  kind: ReceiptKind;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+};
+
+export type ReceiptStorageStatus = {
+  configured: boolean;
+  usedBytes: number;
+  warningBytes: number;
+  criticalBytes: number;
+  hardLimitBytes: number;
+  freeLimitBytes: number;
+  remainingBytes: number;
+  percent: number;
+  level: "NORMAL" | "WARNING" | "CRITICAL" | "BLOCKED";
+  canUpload: boolean;
+};
 
 export type Charge = {
   id: string;
@@ -50,6 +75,7 @@ export type Loan = {
   installments: Charge[];
   monthlyCharges: Charge[];
   payments: Payment[];
+  receipts: Receipt[];
   summary: {
     received: number;
     openBalance: number;
@@ -86,6 +112,7 @@ export type Payment = {
   paymentDate: string;
   paymentMethod: "PIX" | "CASH" | "TRANSFER" | "OTHER";
   notes?: string | null;
+  loanStatus?: LoanStatus;
   customer?: Pick<Customer, "id" | "name">;
   loan?: { id: string; type: LoanType };
   installment?: { number: number; dueDate: string } | null;
