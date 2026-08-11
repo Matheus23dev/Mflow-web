@@ -25,6 +25,15 @@ const frequency = {
   MONTHLY: "Mensal",
 } as const;
 
+const reportLabelClass = "text-[9.5px] font-semibold uppercase tracking-[.45px] text-slate-400";
+const reportValueClass = "mt-1 min-w-0 break-words text-xs text-slate-800";
+const chargeTone = {
+  PENDING: "bg-amber-50 text-amber-700",
+  OVERDUE: "bg-rose-50 text-rose-700",
+  PAID: "bg-emerald-50 text-emerald-700",
+  PARTIAL: "bg-blue-50 text-blue-700",
+} as const;
+
 function chargeAmount(charge: Charge) {
   return Number(charge.amount || charge.interestAmount || 0);
 }
@@ -129,34 +138,34 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
       description="Confira os dados antes de imprimir, salvar em PDF ou enviar ao cliente."
       size="lg"
     >
-      <div className="loan-report-print">
-        <header className="report-document-header">
-          <div className="report-document-brand" />
-          <div className="report-document-id"><span>Contrato <strong>{loan.id}</strong></span><small>{issuedDate}</small></div>
+      <div className="loan-report-print min-w-0 text-slate-700 print:text-black">
+        <header className="report-document-header mb-4 flex min-w-0 flex-col gap-3 border-b-2 border-violet-600 pb-3 min-[421px]:flex-row min-[421px]:items-center min-[421px]:justify-between print:flex-row print:items-center print:justify-between">
+          <div className="report-document-brand h-2.5 w-24 rounded-full bg-gradient-to-r from-violet-500 to-violet-700 print:bg-violet-700" />
+          <div className="report-document-id flex min-w-0 flex-col text-left min-[421px]:items-end min-[421px]:text-right print:items-end print:text-right"><span className="min-w-0 break-words text-[10px] uppercase tracking-[.5px] text-slate-500">Contrato <strong className="text-slate-800">{loan.id}</strong></span><small className="mt-1 text-[10px] text-slate-400">{issuedDate}</small></div>
         </header>
 
-        <section className="report-client-card">
-          <div className="report-client-header">
+        <section className="report-client-card mb-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="report-client-header flex min-w-0 items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3">
             <Avatar name={loan.customer.name} size="lg" />
-            <div><span>Cliente</span><strong>{loan.customer.name}</strong></div>
+            <div className="flex min-w-0 flex-col"><span className={reportLabelClass}>Cliente</span><strong className="mt-1 min-w-0 break-words text-base text-slate-900">{loan.customer.name}</strong></div>
           </div>
-          <div className="report-client-data">
-            <div className="report-client-item"><span><Phone size={14} /> Telefone</span><strong>{loan.customer.phone}</strong></div>
-            <div className="report-client-item"><span><IdCard size={14} /> CPF</span><strong>{loan.customer.cpf || "Não informado"}</strong></div>
-            <div className="report-client-item report-client-address"><span><MapPin size={14} /> Endereço</span><strong>{loan.customer.address || "Não informado"}</strong></div>
+          <div className="report-client-data grid min-w-0 grid-cols-1 gap-3 px-4 py-3 min-[421px]:grid-cols-2 print:grid-cols-2">
+            <div className="report-client-item flex min-w-0 flex-col"><span className={`${reportLabelClass} flex items-center gap-1.5 normal-case tracking-normal`}><Phone size={14} /> Telefone</span><strong className={reportValueClass}>{loan.customer.phone}</strong></div>
+            <div className="report-client-item flex min-w-0 flex-col"><span className={`${reportLabelClass} flex items-center gap-1.5 normal-case tracking-normal`}><IdCard size={14} /> CPF</span><strong className={reportValueClass}>{loan.customer.cpf || "Não informado"}</strong></div>
+            <div className="report-client-item report-client-address flex min-w-0 flex-col min-[421px]:col-span-2 print:col-span-2"><span className={`${reportLabelClass} flex items-center gap-1.5 normal-case tracking-normal`}><MapPin size={14} /> Endereço</span><strong className={reportValueClass}>{loan.customer.address || "Não informado"}</strong></div>
           </div>
         </section>
 
-        <div className="report-contract-status">
+        <div className="report-contract-status mb-5 grid min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:grid-cols-4 print:grid-cols-4 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&>div]:rounded-xl [&>div]:border [&>div]:border-slate-200 [&>div]:bg-white [&>div]:px-3 [&>div]:py-3 [&_span]:text-[9px] [&_span]:font-semibold [&_span]:uppercase [&_span]:tracking-[.4px] [&_span]:text-slate-400 [&_strong]:mt-1 [&_strong]:min-w-0 [&_strong]:break-words [&_strong]:text-[13px] [&_strong]:text-slate-800">
           <div><span>Situação atual</span><strong>{loanStatus[loan.status]}</strong></div>
           <div><span>Valor atualizado a pagar</span><strong>{money(loan.summary.openBalance + loan.summary.lateFees)}</strong></div>
-          {loan.summary.lateFees > 0 && <div className="report-late-fee-total"><span>Juros por atraso</span><strong>{money(loan.summary.lateFees)}</strong></div>}
+          {loan.summary.lateFees > 0 && <div className="report-late-fee-total !border-rose-200 !bg-rose-50 [&>strong]:!text-rose-700"><span>Juros por atraso</span><strong>{money(loan.summary.lateFees)}</strong></div>}
           <div><span>Total recebido</span><strong>{money(loan.summary.received)}</strong></div>
         </div>
 
-        <section className="report-section">
-          <div className="report-section-title"><FileText size={17} /><strong>Condições do contrato</strong></div>
-          <div className="report-terms">
+        <section className="report-section mt-5 min-w-0 break-inside-avoid">
+          <div className="report-section-title mb-2.5 flex min-w-0 items-center gap-2 border-b border-slate-200 pb-2 text-sm text-slate-800"><FileText className="shrink-0 text-violet-600" size={17} /><strong>Condições do contrato</strong></div>
+          <div className="report-terms grid min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[861px]:grid-cols-4 print:grid-cols-4 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&>div]:rounded-lg [&>div]:bg-slate-50 [&>div]:px-3 [&>div]:py-2.5 [&_span]:text-[9.5px] [&_span]:text-slate-400 [&_strong]:mt-1 [&_strong]:min-w-0 [&_strong]:break-words [&_strong]:text-xs [&_strong]:text-slate-800">
             <div><span>Modalidade</span><strong>{loan.type === "WEEKLY" ? "Parcelado" : "Juros mensal"}</strong></div>
             <div><span>Valor do empréstimo</span><strong>{money(loan.principalAmount)}</strong></div>
             {loan.type === "WEEKLY" ? <>
@@ -173,8 +182,8 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
           </div>
         </section>
 
-        <section className="report-section">
-          <div className="report-section-title"><strong>Agenda de cobranças</strong><span>{charges.length} itens</span></div>
+        <section className="report-section mt-5 min-w-0">
+          <div className="report-section-title mb-2.5 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 pb-2 text-sm text-slate-800"><strong>Agenda de cobranças</strong><span className="shrink-0 text-[10px] font-normal text-slate-400">{charges.length} itens</span></div>
           {(() => {
             const half = charges.length > 4 ? Math.ceil(charges.length / 2) : charges.length;
             const col1 = charges.slice(0, half);
@@ -183,30 +192,30 @@ export function LoanReportModal({ loan, onClose }: { loan: Loan | null; onClose:
             const renderRow = (charge: Charge) => {
               const values = chargeValues(charge, loan.lateFeePerDay);
               return (
-                <div className="report-schedule-row" key={charge.id}>
-                  <span className="report-charge-number">{charge.number ? `#${charge.number}` : charge.referenceMonth}</span>
-                  <div className="report-charge-info">
-                    <span>{date(charge.dueDate)}</span>
-                    <strong>{money(values.updatedAmount)}</strong>
-                    {values.paid > 0 ? <small>Pago: {money(values.paid)}</small> : null}
-                    {values.lateFee > 0 ? <small className="report-charge-late-fee">+{money(values.lateFee)} juros ({values.overdue}d)</small> : null}
+                <div className="report-schedule-row grid min-w-0 break-inside-avoid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-2 border-b border-slate-100 px-1 py-2.5" key={charge.id}>
+                  <span className="report-charge-number grid min-h-7 place-items-center rounded-lg bg-violet-50 px-1 text-[9.5px] font-extrabold text-violet-700">{charge.number ? `#${charge.number}` : charge.referenceMonth}</span>
+                  <div className="report-charge-info flex min-w-0 flex-col">
+                    <span className="text-[9.5px] text-slate-400">{date(charge.dueDate)}</span>
+                    <strong className="mt-0.5 overflow-hidden text-xs text-slate-800 text-ellipsis whitespace-nowrap">{money(values.updatedAmount)}</strong>
+                    {values.paid > 0 ? <small className="mt-0.5 text-[8.5px] text-slate-400">Pago: {money(values.paid)}</small> : null}
+                    {values.lateFee > 0 ? <small className="report-charge-late-fee mt-0.5 break-words text-[8.5px] text-rose-600">+{money(values.lateFee)} juros ({values.overdue}d)</small> : null}
                   </div>
-                  <span className={`report-charge-status report-charge-${charge.status.toLowerCase()}`}>{chargeStatus[charge.status]}</span>
+                  <span className={`report-charge-status report-charge-${charge.status.toLowerCase()} w-max rounded-full px-2 py-1 text-[8.5px] font-bold whitespace-nowrap ${chargeTone[charge.status]}`}>{chargeStatus[charge.status]}</span>
                 </div>
               );
             };
 
             return (
-              <div className="report-schedule-columns">
-                <div className="report-schedule-col">{col1.map(renderRow)}</div>
-                {col2.length > 0 ? <div className="report-schedule-col">{col2.map(renderRow)}</div> : null}
+              <div className="report-schedule-columns grid min-w-0 grid-cols-1 gap-x-5 min-[641px]:grid-cols-2 print:grid-cols-2">
+                <div className="report-schedule-col min-w-0">{col1.map(renderRow)}</div>
+                {col2.length > 0 ? <div className="report-schedule-col min-w-0">{col2.map(renderRow)}</div> : null}
               </div>
             );
           })()}
         </section>
       </div>
 
-      <div className="report-actions">
+      <div className="report-actions mt-5 grid min-w-0 grid-cols-1 gap-2 border-t border-slate-100 pt-4 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:justify-end [&>button]:w-full min-[641px]:[&>button]:w-auto print:hidden">
         <Button variant="secondary" onClick={copyReport}><Copy size={17} /> {copied ? "Resumo copiado" : "Copiar resumo"}</Button>
         <Button variant="secondary" onClick={sendWhatsapp}><MessageCircle size={17} /> Enviar no WhatsApp</Button>
         <Button onClick={printReport}><Printer size={17} /> Imprimir / salvar PDF</Button>

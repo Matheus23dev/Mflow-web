@@ -59,7 +59,7 @@ export function Button({ className = "", variant = "primary", loading, children,
   return (
     <button
       data-ui="button"
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold leading-none transition duration-200 disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-11 min-w-0 max-w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm font-semibold leading-none transition duration-200 [&>svg]:shrink-0 disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`}
       disabled={disabled || loading}
       {...props}
     >
@@ -72,7 +72,7 @@ export function Button({ className = "", variant = "primary", loading, children,
 export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return (
     <div className="mb-4 flex min-h-16 flex-col gap-4 sm:mb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-      <div>
+      <div className="min-w-0">
         {eyebrow ? <p className="m-0 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-violet-600">{eyebrow}</p> : null}
         <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">{title}</h1>
         {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p> : null}
@@ -127,16 +127,16 @@ export function Modal({ open, onClose, title, description, children, size = "md"
 
   if (!open) return null;
   return createPortal(
-    <div data-modal-layer className="fixed inset-0 z-[100] grid min-h-dvh place-items-center overflow-hidden bg-slate-950/55 p-3 backdrop-blur-[2px] sm:p-5" role="dialog" aria-modal="true" aria-labelledby={titleId} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div data-modal className={`flex max-h-[min(90dvh,800px)] w-full flex-col overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_25px_70px_rgba(26,20,39,0.25)] ${size === "sm" ? "max-w-md" : size === "lg" ? "max-w-4xl" : "max-w-2xl"}`}>
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5">
-          <div>
-            <h2 id={titleId} className="text-xl font-semibold tracking-tight text-slate-900">{title}</h2>
-            {description ? <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p> : null}
+    <div data-modal-layer className="fixed inset-0 z-[100] grid min-h-dvh place-items-center overflow-hidden bg-slate-950/55 p-3 backdrop-blur-[2px] sm:p-5 print:static print:block print:min-h-0 print:overflow-visible print:bg-white print:p-0 print:backdrop-blur-none" role="dialog" aria-modal="true" aria-labelledby={titleId} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <div data-modal className={`flex max-h-[min(90dvh,800px)] min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-white/60 bg-white shadow-[0_25px_70px_rgba(26,20,39,0.25)] print:max-h-none print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:shadow-none ${size === "sm" ? "max-w-md" : size === "lg" ? "max-w-4xl" : "max-w-2xl"}`}>
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6 sm:py-5 print:hidden">
+          <div className="min-w-0 flex-1">
+            <h2 id={titleId} className="break-words text-xl font-semibold tracking-tight text-slate-900">{title}</h2>
+            {description ? <p className="mt-1 break-words text-sm leading-6 text-slate-500">{description}</p> : null}
           </div>
           <button className="grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 transition hover:bg-violet-50 hover:text-violet-700" onClick={onClose} aria-label="Fechar"><X size={19} /></button>
         </div>
-        <div data-modal-body className="overflow-x-hidden overflow-y-auto p-5 sm:p-6">{children}</div>
+        <div data-modal-body className="overflow-x-hidden overflow-y-auto p-5 sm:p-6 print:overflow-visible print:p-0">{children}</div>
       </div>
     </div>,
     document.body,
@@ -200,8 +200,8 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
 
 export function Toast({ message, tone = "success", onClose }: { message: string; tone?: "success" | "error"; onClose: () => void }) {
   return (
-    <div className={`fixed right-4 bottom-4 z-[150] flex max-w-[calc(100vw-2rem)] items-center gap-4 rounded-xl border-l-4 px-4 py-3 text-sm text-white shadow-2xl sm:right-6 sm:bottom-6 ${tone === "success" ? "border-emerald-400 bg-slate-900" : "border-rose-400 bg-slate-900"}`} role="status">
-      <span>{message}</span>
+    <div data-ui="toast" className={`fixed right-4 bottom-4 z-[150] flex max-w-[calc(100vw-2rem)] items-center gap-4 rounded-xl border-l-4 px-4 py-3 text-sm text-white shadow-2xl sm:right-6 sm:bottom-6 ${tone === "success" ? "border-emerald-400 bg-slate-900" : "border-rose-400 bg-slate-900"}`} role="status">
+      <span className="min-w-0 flex-1 break-words">{message}</span>
       <button className="grid size-7 shrink-0 place-items-center rounded-lg text-slate-300 transition hover:bg-white/10 hover:text-white" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
     </div>
   );

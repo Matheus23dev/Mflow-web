@@ -75,7 +75,7 @@ function App() {
   }
 
   if (checkingSession) {
-    return <div className="boot-screen"><div className="brand-mark"><span>M</span></div><LoadingState label="Carregando o sistema..." /></div>;
+    return <div className="boot-screen flex min-h-dvh flex-col items-center justify-center bg-[#f7f6fa] text-slate-700"><div className="brand-mark grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-xl font-black text-white shadow-[0_14px_30px_rgba(109,67,220,.26)]"><span>M</span></div><LoadingState label="Carregando o sistema..." /></div>;
   }
 
   if (!user) return <AuthPage onAuthenticated={authenticated} />;

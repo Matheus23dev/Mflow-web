@@ -8,6 +8,15 @@ import { loansService } from "../services/loans.service";
 import { LoanProgress } from "../components/LoanProgress";
 import { customersService } from "@/features/customers/services/customers.service";
 
+const formGridClass = "grid min-w-0 grid-cols-1 gap-4 min-[641px]:grid-cols-2";
+const fieldSpanClass = "min-w-0 min-[641px]:col-span-2";
+const formActionsClass = "grid grid-cols-1 gap-2 border-t border-slate-100 pt-4 min-[421px]:flex min-[421px]:justify-end [&>button]:w-full min-[421px]:[&>button]:w-auto";
+const formErrorClass = "rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs leading-relaxed text-rose-700";
+const contractPreviewClass = "grid min-w-0 grid-cols-1 gap-1 rounded-xl border border-violet-100 bg-violet-50/70 px-4 py-3 text-xs text-slate-500 min-[421px]:grid-cols-[minmax(0,1fr)_auto] min-[421px]:items-center [&>span]:min-w-0 [&>strong]:break-words [&>strong]:text-base [&>strong]:text-violet-700 [&>small]:min-w-0 [&>small]:break-words min-[421px]:[&>small]:col-span-2";
+const typePickerClass = "grid min-w-0 grid-cols-1 gap-2 min-[641px]:grid-cols-2";
+const typeButtonBaseClass = "flex min-h-[74px] min-w-0 items-center gap-3 rounded-xl border p-3 text-left transition [&>span]:grid [&>span]:size-10 [&>span]:shrink-0 [&>span]:place-items-center [&>span]:rounded-xl [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&_strong]:text-xs [&_small]:mt-1 [&_small]:break-words [&_small]:text-[10px] [&_small]:leading-relaxed";
+const typeButtonClass = (selected: boolean) => `${typeButtonBaseClass} ${selected ? "border-violet-400 bg-violet-50 text-violet-700 ring-2 ring-violet-100 [&>span]:bg-white" : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 [&>span]:bg-slate-50 [&_small]:text-slate-500"}`;
+
 export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (loan: Loan) => void }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [type, setType] = useState<LoanType>("WEEKLY");
@@ -65,12 +74,12 @@ export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onC
       {customers.length === 0 && !error ? (
         <EmptyState title="Cadastre um cliente primeiro" description="Um empréstimo precisa estar vinculado a um cliente da carteira." />
       ) : (
-        <form onSubmit={submit} className="form-grid loan-form">
-          <div className="field-span loan-type-picker">
-            <button type="button" className={type === "WEEKLY" ? "selected" : ""} onClick={() => setType("WEEKLY")}><span><CalendarDays size={19} /></span><div><strong>Parcelado</strong><small>Parcelas semanais, quinzenais ou mensais</small></div></button>
-            <button type="button" className={type === "MONTHLY_INTEREST" ? "selected" : ""} onClick={() => setType("MONTHLY_INTEREST")}><span><CircleDollarSign size={19} /></span><div><strong>Juros mensal</strong><small>Juros recorrentes com principal em aberto</small></div></button>
+        <form onSubmit={submit} className={`${formGridClass} loan-form`}>
+          <div className={`${fieldSpanClass} ${typePickerClass} loan-type-picker`}>
+            <button type="button" className={typeButtonClass(type === "WEEKLY")} onClick={() => setType("WEEKLY")}><span><CalendarDays size={19} /></span><div><strong>Parcelado</strong><small>Parcelas semanais, quinzenais ou mensais</small></div></button>
+            <button type="button" className={typeButtonClass(type === "MONTHLY_INTEREST")} onClick={() => setType("MONTHLY_INTEREST")}><span><CircleDollarSign size={19} /></span><div><strong>Juros mensal</strong><small>Juros recorrentes com principal em aberto</small></div></button>
           </div>
-          <div className="field-span"><Field label="Cliente"><Select name="customerId" required defaultValue=""><option value="" disabled>Selecione um cliente</option>{customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name} · {customer.phone}</option>)}</Select></Field></div>
+          <div className={fieldSpanClass}><Field label="Cliente"><Select name="customerId" required defaultValue=""><option value="" disabled>Selecione um cliente</option>{customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name} · {customer.phone}</option>)}</Select></Field></div>
           <Field label="Valor principal"><Input name="principalAmount" type="number" min="0.01" step="0.01" required value={principal} onChange={(event) => setPrincipal(event.target.value)} placeholder="0,00" /></Field>
           <Field label="Data do empréstimo"><Input name="loanDate" type="date" defaultValue={todayInput()} required /></Field>
           <Field label="Multa por dia"><Input name="lateFeePerDay" type="number" min="0" step="0.01" defaultValue="0" required /></Field>
@@ -79,14 +88,14 @@ export function LoanFormModal({ open, onClose, onCreated }: { open: boolean; onC
             <Field label="Quantidade de parcelas"><Input name="installmentCount" type="number" min="1" required value={installments} onChange={(event) => setInstallments(event.target.value)} /></Field>
             <Field label="Valor da parcela"><Input name="installmentAmount" type="number" min="0.01" step="0.01" required value={installmentAmount} onChange={(event) => setInstallmentAmount(event.target.value)} placeholder="0,00" /></Field>
             <Field label="Primeiro vencimento"><Input name="firstDueDate" type="date" required /></Field>
-            <div className="contract-preview field-span"><span>Total contratado</span><strong>{money(total)}</strong><small>{installments || 0} parcelas de {money(installmentAmount)}</small></div>
+            <div className={`${fieldSpanClass} ${contractPreviewClass} contract-preview`}><span>Total contratado</span><strong>{money(total)}</strong><small>{installments || 0} parcelas de {money(installmentAmount)}</small></div>
           </> : <>
             <Field label="Taxa de juros ao mês"><Input name="monthlyInterestRate" type="number" min="0.0001" step="0.0001" required value={rate} onChange={(event) => setRate(event.target.value)} placeholder="Ex.: 8" /></Field>
             <Field label="Dia do vencimento"><Input name="monthlyDueDay" type="number" min="1" max="31" required defaultValue="10" /></Field>
-            <div className="contract-preview field-span"><span>Juros mensal estimado</span><strong>{money(monthlyInterest)}</strong><small>Taxa de {Number(rate || 0).toLocaleString("pt-BR")}% sobre {money(principal)}</small></div>
+            <div className={`${fieldSpanClass} ${contractPreviewClass} contract-preview`}><span>Juros mensal estimado</span><strong>{money(monthlyInterest)}</strong><small>Taxa de {Number(rate || 0).toLocaleString("pt-BR")}% sobre {money(principal)}</small></div>
           </>}
-          {error ? <div className="form-error field-span">{error}</div> : null}
-          <div className="form-actions field-span"><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Criar empréstimo</Button></div>
+          {error ? <div className={`${fieldSpanClass} ${formErrorClass} form-error`}>{error}</div> : null}
+          <div className={`${fieldSpanClass} ${formActionsClass} form-actions`}><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Criar empréstimo</Button></div>
         </form>
       )}
     </Modal>
@@ -161,9 +170,9 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
 
   return (
     <Modal open={Boolean(loan)} onClose={onClose} title="Editar empréstimo" description={`Contrato de ${loan.customer.name}`} size="lg">
-      <form onSubmit={submit} className="form-grid loan-form">
+      <form onSubmit={submit} className={`${formGridClass} loan-form`}>
         {hasPayments ? (
-          <div className="field-span form-info-box">
+          <div className={`${fieldSpanClass} form-info-box rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900`}>
             <strong>Atenção ao renegociar:</strong> Este contrato possui pagamentos registrados ({paidCount} cobrança(s) já paga(s) totalizando {money(paidAmountTotal)}). O histórico pago é mantido e os novos valores serão aplicados às parcelas/cobranças futuras.
           </div>
         ) : null}
@@ -180,9 +189,9 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
             <Field label="Quantidade total de parcelas"><Input type="number" min={Math.max(1, paidCount)} required value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} /></Field>
             <Field label="Valor da parcela"><Input type="number" min="0.01" step="0.01" required value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} placeholder="0,00" /></Field>
             <Field label="Primeiro vencimento"><Input type="date" required value={firstDueDate} onChange={(e) => setFirstDueDate(e.target.value)} /></Field>
-            <div className="contract-preview field-span">
+            <div className={`${fieldSpanClass} ${contractPreviewClass} contract-preview`}>
               <span>Total contratado estimado: <strong>{money(totalCalculated)}</strong> ({installmentCount || 0} parcelas de {money(installmentAmount)})</span>
-              <small style={{ marginTop: 4, display: "block" }}>
+              <small className="mt-1 block">
                 Saldo a pagar restante: <strong>{money(remainingBalanceCalculated)}</strong> ({remainingInstallmentsCount} parcelas futuras de {money(installmentAmount)})
               </small>
             </div>
@@ -190,21 +199,21 @@ export function EditLoanModal({ loan, onClose, onSaved }: { loan: Loan | null; o
         ) : (
           <>
             <Field label="Dia do vencimento mensal"><Input type="number" min="1" max="31" required value={monthlyDueDay} onChange={(e) => setMonthlyDueDay(e.target.value)} /></Field>
-            <div className="field-span loan-type-picker">
-              <button type="button" className={rateMode === "percentage" ? "selected" : ""} onClick={() => setRateMode("percentage")}><div><strong>Taxa percentual (%)</strong></div></button>
-              <button type="button" className={rateMode === "fixed" ? "selected" : ""} onClick={() => setRateMode("fixed")}><div><strong>Valor fixo de juros (R$)</strong></div></button>
+            <div className={`${fieldSpanClass} ${typePickerClass} loan-type-picker`}>
+              <button type="button" className={typeButtonClass(rateMode === "percentage")} onClick={() => setRateMode("percentage")}><div><strong>Taxa percentual (%)</strong></div></button>
+              <button type="button" className={typeButtonClass(rateMode === "fixed")} onClick={() => setRateMode("fixed")}><div><strong>Valor fixo de juros (R$)</strong></div></button>
             </div>
             {rateMode === "percentage" ? (
               <Field label="Taxa de juros ao mês (%)"><Input type="number" min="0.0001" step="0.0001" required value={monthlyInterestRate} onChange={(e) => setMonthlyInterestRate(e.target.value)} placeholder="Ex.: 10" /></Field>
             ) : (
               <Field label="Valor mensal de juros (R$)"><Input type="number" min="0.01" step="0.01" required value={monthlyInterestAmount} onChange={(e) => setMonthlyInterestAmount(e.target.value)} placeholder="Ex.: 1000,00" /></Field>
             )}
-            <div className="contract-preview field-span"><span>Juros mensal estimado</span><strong>{money(monthlyInterestCalculated)}</strong><small>{rateMode === "percentage" ? `Taxa de ${Number(monthlyInterestRate || 0).toLocaleString("pt-BR")}% sobre o saldo de ${money(principalBalance || principalAmount)}` : `Juros fixos de ${money(monthlyInterestAmount)}`}</small></div>
+            <div className={`${fieldSpanClass} ${contractPreviewClass} contract-preview`}><span>Juros mensal estimado</span><strong>{money(monthlyInterestCalculated)}</strong><small>{rateMode === "percentage" ? `Taxa de ${Number(monthlyInterestRate || 0).toLocaleString("pt-BR")}% sobre o saldo de ${money(principalBalance || principalAmount)}` : `Juros fixos de ${money(monthlyInterestAmount)}`}</small></div>
           </>
         )}
 
-        {error ? <div className="form-error field-span">{error}</div> : null}
-        <div className="form-actions field-span"><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Salvar alterações</Button></div>
+        {error ? <div className={`${fieldSpanClass} ${formErrorClass} form-error`}>{error}</div> : null}
+        <div className={`${fieldSpanClass} ${formActionsClass} form-actions`}><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" loading={saving}>Salvar alterações</Button></div>
       </form>
     </Modal>
   );
@@ -233,12 +242,12 @@ function CancelLoanModal({ loan, onClose, onCancelled }: { loan: Loan | null; on
 
   return (
     <Modal open={Boolean(loan)} onClose={onClose} title="Cancelar contrato" description={`Cliente: ${loan.customer.name}`} size="sm">
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: "#444" }}>
+      <div className="flex min-w-0 flex-col gap-3.5">
+        <p className="m-0 break-words text-[13px] leading-relaxed text-slate-700">
           Tem certeza de que deseja cancelar este contrato de <strong>{money(loan.summary.openBalance)}</strong>? O contrato passará para o status <strong>CANCELADO</strong>.
         </p>
-        {error ? <div className="form-error">{error}</div> : null}
-        <div className="form-actions" style={{ margin: "10px -26px -26px", padding: "14px 26px" }}>
+        {error ? <div className={`${formErrorClass} form-error`}>{error}</div> : null}
+        <div className={`${formActionsClass} form-actions cancel-loan-actions`}>
           <Button variant="ghost" onClick={onClose}>Voltar</Button>
           <Button variant="danger" loading={cancelling} onClick={confirmCancel}>Sim, cancelar contrato</Button>
         </div>
@@ -259,46 +268,46 @@ export function LoansPage({ refreshKey, onNewLoan, onPayment, onReport, onSaved 
   const filtered = useMemo(() => loans?.filter((loan) => loan.customer.name.toLowerCase().includes(search.toLowerCase())) || [], [loans, search]);
 
   return (
-    <div className="page-enter data-page loans-page">
+    <div className="page-enter data-page loans-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
       <PageHeader eyebrow="Carteira" title="Empréstimos" description="Acompanhe contratos, saldos e andamento dos pagamentos." action={<Button onClick={onNewLoan}><Plus size={18} /> Novo empréstimo</Button>} />
-      <section className="panel table-panel">
-        <div className="list-toolbar loan-toolbar">
-          <div className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por cliente" /></div>
-          <div className="toolbar-filters"><Filter size={16} /><Select value={status} onChange={(event) => setStatus(event.target.value as LoanStatus | "")}><option value="">Todos os status</option><option value="ACTIVE">Em dia</option><option value="OVERDUE">Em atraso</option><option value="PAID">Pagos</option><option value="RENEWED">Renovados</option><option value="CANCELLED">Cancelados</option></Select><Select value={type} onChange={(event) => setType(event.target.value as LoanType | "")}><option value="">Todos os tipos</option><option value="WEEKLY">Parcelado</option><option value="MONTHLY_INTEREST">Juros mensal</option></Select></div>
+      <section className="panel table-panel min-w-0 overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[861px]:flex min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:flex-col">
+        <div className="list-toolbar loan-toolbar flex min-w-0 flex-col items-stretch justify-between gap-3.5 border-b border-[#eeecf1] px-[18px] py-[14px] min-[641px]:flex-row min-[641px]:flex-wrap min-[641px]:items-center">
+          <div className="search-box flex h-[43px] w-full min-w-0 items-center gap-[9px] rounded-[9px] border border-[#e6e3ea] bg-[#faf9fc] px-[11px] text-[#9b97a3] focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-100 min-[641px]:w-[min(320px,100%)]"><Search className="shrink-0" size={18} /><input className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[#373340] outline-none placeholder:text-[#aaa6b1] min-[641px]:text-[13px]" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por cliente" /></div>
+          <div className="toolbar-filters grid min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:w-auto min-[641px]:items-center [&>svg]:hidden min-[641px]:[&>svg]:block [&_[data-ui=input]]:w-full min-[641px]:[&_[data-ui=input]]:w-[150px]"><Filter className="shrink-0 text-[#8d8895]" size={16} /><Select value={status} onChange={(event) => setStatus(event.target.value as LoanStatus | "")}><option value="">Todos os status</option><option value="ACTIVE">Em dia</option><option value="OVERDUE">Em atraso</option><option value="PAID">Pagos</option><option value="RENEWED">Renovados</option><option value="CANCELLED">Cancelados</option></Select><Select value={type} onChange={(event) => setType(event.target.value as LoanType | "")}><option value="">Todos os tipos</option><option value="WEEKLY">Parcelado</option><option value="MONTHLY_INTEREST">Juros mensal</option></Select></div>
         </div>
         {!loans && !error ? <LoadingState /> : null}
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         {loans && filtered.length === 0 ? <EmptyState title="Nenhum empréstimo por aqui" description="Crie um novo contrato ou ajuste os filtros da lista." action={!loans.length ? <Button onClick={onNewLoan}><Plus size={17} /> Criar empréstimo</Button> : undefined} /> : null}
-        <div className="loan-list">
+        <div className="loan-list grid min-w-0 gap-2 px-1.5 pb-2 min-[641px]:px-3 min-[641px]:pb-3 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:overflow-y-auto min-[861px]:overscroll-contain">
           {filtered.map((loan) => {
             const progress = loan.summary.totalCount ? (loan.summary.paidCount / loan.summary.totalCount) * 100 : ((Number(loan.principalAmount) - Number(loan.principalBalance)) / Number(loan.principalAmount)) * 100;
             const charges = loan.type === "WEEKLY" ? loan.installments : loan.monthlyCharges;
             const isOpen = expanded === loan.id;
             return (
-              <article className={`loan-card ${isOpen ? "expanded" : ""}`} key={loan.id}>
-                <button className="loan-main" onClick={() => setExpanded(isOpen ? null : loan.id)}>
+              <article className={`loan-card min-w-0 overflow-hidden rounded-xl border bg-white transition ${isOpen ? "expanded border-violet-200 shadow-[0_8px_24px_rgba(78,53,130,.08)]" : "border-[#ebe8ef]"}`} key={loan.id}>
+                <button className="loan-main grid w-full min-w-0 grid-cols-[35px_minmax(0,1fr)_minmax(78px,auto)_17px] items-center gap-2.5 border-0 bg-transparent px-3 py-3 text-left text-[#3b3642] min-[641px]:grid-cols-[35px_minmax(140px,1fr)_minmax(90px,.7fr)_minmax(85px,.6fr)_18px] min-[641px]:gap-3 min-[641px]:px-4 min-[861px]:grid-cols-[36px_minmax(140px,1.2fr)_minmax(115px,.75fr)_minmax(100px,.7fr)_minmax(95px,.6fr)_18px]" onClick={() => setExpanded(isOpen ? null : loan.id)}>
                   <Avatar name={loan.customer.name} />
-                  <div className="loan-person"><strong>{loan.customer.name}</strong><span><Phone size={13} /> {loan.customer.phone}</span></div>
-                  <div className="loan-type"><span>{loan.type === "WEEKLY" ? "Parcelado" : "Juros mensal"}</span><small>Início em {date(loan.loanDate)}</small></div>
-                  <div className="loan-amount"><strong>{money(loan.summary.openBalance)}</strong><span>valor a pagar</span></div>
-                  <div className="loan-status"><StatusBadge status={loan.status} />{loan.summary.nextDue ? <small>Próx. {date(loan.summary.nextDue)}</small> : null}</div>
-                  {isOpen ? <ChevronDown size={19} /> : <ChevronRight size={19} />}
+                  <div className="loan-person flex min-w-0 flex-col"><strong className="overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">{loan.customer.name}</strong><span className="mt-1 flex min-w-0 items-center gap-1 overflow-hidden text-[10.5px] text-[#9995a1] text-ellipsis whitespace-nowrap"><Phone className="shrink-0" size={13} /> {loan.customer.phone}</span></div>
+                  <div className="loan-type hidden min-w-0 flex-col min-[861px]:flex"><span className="overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">{loan.type === "WEEKLY" ? "Parcelado" : "Juros mensal"}</span><small className="mt-1 overflow-hidden text-[10px] text-[#9b96a2] text-ellipsis whitespace-nowrap">Início em {date(loan.loanDate)}</small></div>
+                  <div className="loan-amount flex min-w-0 flex-col items-end text-right min-[641px]:items-start min-[641px]:text-left"><strong className="max-w-full overflow-hidden text-[13px] text-violet-700 text-ellipsis whitespace-nowrap">{money(loan.summary.openBalance)}</strong><span className="mt-1 text-[10px] text-[#9b96a2]">valor a pagar</span></div>
+                  <div className="loan-status hidden min-w-0 flex-col items-start min-[641px]:flex"> <StatusBadge status={loan.status} />{loan.summary.nextDue ? <small className="mt-1 text-[10px] text-[#9b96a2]">Próx. {date(loan.summary.nextDue)}</small> : null}</div>
+                  {isOpen ? <ChevronDown className="shrink-0 text-[#aaa6b1]" size={19} /> : <ChevronRight className="shrink-0 text-[#aaa6b1]" size={19} />}
                 </button>
                 <LoanProgress value={progress} />
                 {isOpen ? (
-                  <div className="loan-detail">
-                    <div className="loan-detail-stats"><div><span>Valor principal</span><strong>{money(loan.principalAmount)}</strong></div><div><span>Total recebido</span><strong>{money(loan.summary.received)}</strong></div><div><span>Multas acumuladas</span><strong>{money(loan.summary.lateFees)}</strong></div><div><span>Andamento</span><strong>{loan.summary.paidCount}/{loan.summary.totalCount} cobranças</strong></div></div>
-                    <div className="schedule-head">
+                  <div className="loan-detail min-w-0 border-t border-[#efedf2] bg-[#fdfcff] px-3 pb-4 pt-3 min-[641px]:px-4">
+                    <div className="loan-detail-stats mb-4 grid min-w-0 grid-cols-2 gap-2 min-[641px]:grid-cols-4 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&>div]:rounded-[10px] [&>div]:bg-white [&>div]:px-3 [&>div]:py-2.5 [&_span]:text-[10px] [&_span]:text-[#9995a1] [&_strong]:mt-1 [&_strong]:break-words [&_strong]:text-xs"><div><span>Valor principal</span><strong>{money(loan.principalAmount)}</strong></div><div><span>Total recebido</span><strong>{money(loan.summary.received)}</strong></div><div><span>Multas acumuladas</span><strong>{money(loan.summary.lateFees)}</strong></div><div><span>Andamento</span><strong>{loan.summary.paidCount}/{loan.summary.totalCount} cobranças</strong></div></div>
+                    <div className="schedule-head mb-3 flex min-w-0 flex-col gap-3 min-[641px]:flex-row min-[641px]:items-center min-[641px]:justify-between">
                       <strong>Agenda do contrato</strong>
-                      <div className="loan-detail-actions">
+                      <div className="loan-detail-actions grid w-full min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:w-auto min-[641px]:flex-wrap min-[641px]:justify-end [&>button]:w-full min-[641px]:[&>button]:w-auto min-[641px]:[&>button]:min-h-9 min-[641px]:[&>button]:px-3 min-[641px]:[&>button]:py-2 min-[641px]:[&>button]:text-xs">
                         <Button variant="secondary" onClick={() => onReport(loan)}><FileText size={17} /> Relatório</Button>
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setEditingLoan(loan)}><Pencil size={17} /> Editar contrato</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button variant="secondary" onClick={() => setCancellingLoan(loan)}><Ban size={17} /> Cancelar</Button> : null}
                         {["ACTIVE", "OVERDUE"].includes(loan.status) ? <Button onClick={() => onPayment(loan)}><CircleDollarSign size={17} /> Registrar pagamento</Button> : null}
                       </div>
                     </div>
-                    <div className="schedule-grid">
-                      {charges.slice(0, 12).map((charge) => <div className="schedule-item" key={charge.id}><span>{charge.number ? `#${charge.number}` : charge.referenceMonth}</span><div><strong>{money(charge.amount || charge.interestAmount)}</strong><small>{date(charge.dueDate)}</small></div><StatusBadge status={charge.status} /></div>)}
+                    <div className="schedule-grid grid min-w-0 grid-cols-1 gap-2 min-[641px]:grid-cols-2 min-[861px]:grid-cols-3">
+                      {charges.slice(0, 12).map((charge) => <div className="schedule-item grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border border-[#ebe8ef] bg-white px-3 py-2.5" key={charge.id}><span className="text-[10px] font-extrabold text-violet-600">{charge.number ? `#${charge.number}` : charge.referenceMonth}</span><div className="flex min-w-0 flex-col"><strong className="overflow-hidden text-xs text-ellipsis whitespace-nowrap">{money(charge.amount || charge.interestAmount)}</strong><small className="mt-1 text-[9.5px] text-[#9995a1]">{date(charge.dueDate)}</small></div><StatusBadge status={charge.status} /></div>)}
                     </div>
                   </div>
                 ) : null}
