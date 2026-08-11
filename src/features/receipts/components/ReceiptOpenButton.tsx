@@ -19,8 +19,7 @@ export function ReceiptOpenButton({
     const preview = window.open("", "_blank");
     setLoading(true);
     try {
-      const blob = await receiptsService.file(receipt.id);
-      const url = URL.createObjectURL(blob);
+      const { url } = await receiptsService.file(receipt.id);
       if (preview) {
         preview.opener = null;
         preview.location.href = url;
@@ -33,7 +32,6 @@ export function ReceiptOpenButton({
         link.click();
         link.remove();
       }
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (caught) {
       preview?.close();
       window.alert(

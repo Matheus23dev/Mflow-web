@@ -36,6 +36,17 @@ export type Receipt = {
   createdAt: string;
 };
 
+export type DatabaseUsageStatus = {
+  usedBytes: number;
+  warningBytes: number;
+  criticalBytes: number;
+  dangerBytes: number;
+  freeLimitBytes: number;
+  remainingBytes: number;
+  percent: number;
+  level: "NORMAL" | "WARNING" | "CRITICAL" | "DANGER";
+};
+
 export type ReceiptStorageStatus = {
   configured: boolean;
   usedBytes: number;
@@ -47,6 +58,7 @@ export type ReceiptStorageStatus = {
   percent: number;
   level: "NORMAL" | "WARNING" | "CRITICAL" | "BLOCKED";
   canUpload: boolean;
+  database?: DatabaseUsageStatus;
 };
 
 export type Charge = {
