@@ -42,6 +42,16 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
     }));
   }, [data]);
 
+  function changeFrom(value: string) {
+    setFrom(value);
+    if (value && to && value > to) setTo(value);
+  }
+
+  function changeTo(value: string) {
+    setTo(value);
+    if (value && from && value < from) setFrom(value);
+  }
+
   function printReports() {
     if (!reportRef.current) return;
     const printRoot = document.createElement("div");
@@ -87,29 +97,41 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
           </Button>
         }
       />
-      <div className="report-filter panel mb-[17px] grid grid-cols-1 items-center gap-x-[7px] gap-y-[9px] rounded-[14px] border border-[#e9e7ef] bg-white px-4 py-3 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[421px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[641px]:flex min-[641px]:gap-[9px]">
-        <div className="col-span-full flex items-center gap-2 text-[11px] text-[#625d6c] min-[641px]:mr-auto min-[641px]:w-auto">
+      <div className="report-filter panel mb-[17px] flex min-w-0 flex-col items-stretch gap-3 rounded-[14px] border border-[#e9e7ef] bg-white px-4 py-3 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[641px]:flex-row min-[641px]:items-end min-[641px]:gap-[9px]">
+        <div className="flex min-w-0 items-center gap-2 text-[11px] text-[#625d6c] min-[641px]:mb-3 min-[641px]:mr-auto">
           <CalendarRange className="shrink-0" size={18} />
           <strong>Período da análise</strong>
         </div>
-        <Input
-          className="w-full min-[641px]:w-[133px]"
-          type="date"
-          value={from}
-          onChange={(event) => setFrom(event.target.value)}
-        />
-        <span className="hidden text-[9.5px] text-[#9d98a4] min-[421px]:block">
+        <label className="flex min-w-0 flex-col gap-1.5 min-[641px]:w-[150px]">
+          <span className="text-[10px] font-semibold text-slate-500">
+            Data inicial
+          </span>
+          <Input
+            className="w-full"
+            type="date"
+            max={to || undefined}
+            value={from}
+            onChange={(event) => changeFrom(event.target.value)}
+          />
+        </label>
+        <span className="hidden pb-3 text-[9.5px] text-[#9d98a4] min-[641px]:block">
           até
         </span>
-        <Input
-          className="w-full min-[641px]:w-[133px]"
-          type="date"
-          min={from}
-          value={to}
-          onChange={(event) => setTo(event.target.value)}
-        />
+        <label className="flex min-w-0 flex-col gap-1.5 min-[641px]:w-[150px]">
+          <span className="text-[10px] font-semibold text-slate-500">
+            Data final
+          </span>
+          <Input
+            className="w-full"
+            type="date"
+            min={from || undefined}
+            value={to}
+            onChange={(event) => changeTo(event.target.value)}
+          />
+        </label>
         <button
-          className="col-span-full min-h-[38px] justify-self-start border-0 bg-transparent px-2 py-1.5 text-[11px] font-bold text-violet-600 min-[641px]:min-h-0"
+          type="button"
+          className="min-h-11 w-full rounded-lg border-0 bg-violet-50 px-3 py-2.5 text-[11px] font-bold text-violet-700 min-[641px]:mb-0 min-[641px]:min-h-[42px] min-[641px]:w-auto min-[641px]:bg-transparent"
           onClick={() => {
             setFrom("");
             setTo("");

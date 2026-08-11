@@ -1370,7 +1370,7 @@ export function LoansPage({
                       })}
                     </div>
                     <ReceiptList
-                      receipts={loan.receipts || []}
+                      loan={loan}
                       onChanged={load}
                     />
                   </div>

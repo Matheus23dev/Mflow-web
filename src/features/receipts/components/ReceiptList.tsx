@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FileImage, FileText, Trash2 } from "lucide-react";
-import type { Receipt } from "@/shared/types";
+import type { Loan, Receipt } from "@/shared/types";
+import { paymentMethodLabels } from "@/shared/lib/payments";
 import { Button } from "@/shared/ui";
 import { receiptsService } from "../services/receipts.service";
 import { ReceiptOpenButton } from "./ReceiptOpenButton";
@@ -18,12 +19,13 @@ function fileSize(value: number) {
 }
 
 export function ReceiptList({
-  receipts,
+  loan,
   onChanged,
 }: {
-  receipts: Receipt[];
+  loan: Loan;
   onChanged: () => void;
 }) {
+  const receipts = loan.receipts || [];
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -61,6 +63,26 @@ export function ReceiptList({
           {receipts.map((receipt) => {
             const Icon =
               receipt.mimeType === "application/pdf" ? FileText : FileImage;
+            const payment = receipt.paymentId
+              ? loan.payments.find((item) => item.id === receipt.paymentId)
+              : undefined;
+            const installment = payment?.installmentId
+              ? loan.installments.find(
+                  (item) => item.id === payment.installmentId,
+                )
+              : undefined;
+            const monthlyCharge = payment?.monthlyChargeId
+              ? loan.monthlyCharges.find(
+                  (item) => item.id === payment.monthlyChargeId,
+                )
+              : undefined;
+            const paymentLabel = installment
+              ? `Parcela ${installment.number} · ${paymentMethodLabels[payment!.paymentMethod]}`
+              : monthlyCharge
+                ? `Juros ${monthlyCharge.referenceMonth} · ${paymentMethodLabels[payment!.paymentMethod]}`
+                : payment
+                  ? `${payment.type === "PAYOFF" ? "Quitação" : payment.type === "PRINCIPAL" ? "Abatimento principal" : payment.type === "RENEWAL_ENTRY" ? "Entrada da renovação" : "Pagamento recebido"} · ${paymentMethodLabels[payment.paymentMethod]}`
+                  : labels[receipt.kind];
             return (
               <div
                 key={receipt.id}
@@ -71,7 +93,7 @@ export function ReceiptList({
                 </span>
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate text-[11px] text-slate-700">
-                    {labels[receipt.kind]}
+                    {paymentLabel}
                   </strong>
                   <span className="mt-1 block truncate text-[9.5px] text-slate-400">
                     {receipt.originalName} · {fileSize(receipt.sizeBytes)}
