@@ -12,6 +12,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { money } from "@/shared/lib/format";
+import { hideBrowserPrintMetadata } from "@/shared/lib/print";
 import {
   Button,
   ErrorState,
@@ -55,10 +56,11 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   function printReports() {
     if (!reportRef.current) return;
     const printRoot = document.createElement("div");
-    printRoot.className = "hidden print:block";
+    printRoot.className = "hidden print:block print:p-[12mm]";
     printRoot.setAttribute("aria-hidden", "true");
     printRoot.appendChild(reportRef.current.cloneNode(true));
     document.body.appendChild(printRoot);
+    const restorePrintPage = hideBrowserPrintMetadata();
 
     const previousTitle = document.title;
     let cleaned = false;
@@ -68,6 +70,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
       window.clearTimeout(fallback);
       window.removeEventListener("afterprint", finish);
       printRoot.remove();
+      restorePrintPage();
       document.title = previousTitle;
     };
     const fallback = window.setTimeout(finish, 60_000);
@@ -97,49 +100,66 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
           </Button>
         }
       />
-      <div className="report-filter panel mb-[17px] grid min-w-0 max-w-full grid-cols-2 items-end gap-x-2 gap-y-2.5 overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white p-3 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[641px]:flex min-[641px]:items-end min-[641px]:gap-[9px] min-[641px]:overflow-visible min-[641px]:px-4">
-        <div className="order-1 flex min-w-0 items-center gap-1.5 text-[10.5px] text-[#625d6c] min-[641px]:mb-3 min-[641px]:mr-auto min-[641px]:text-[11px]">
+      <div className="report-filter panel mb-[17px] flex min-w-0 max-w-full items-center gap-1.5 overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white p-2.5 shadow-[0_3px_14px_rgba(42,35,65,0.025)] print:hidden min-[641px]:items-end min-[641px]:gap-[9px] min-[641px]:overflow-visible min-[641px]:px-4 min-[641px]:py-3">
+        <div className="flex shrink-0 items-center gap-1 text-[10px] text-[#625d6c] min-[641px]:mb-3 min-[641px]:mr-auto min-[641px]:gap-1.5 min-[641px]:text-[11px]">
           <CalendarRange className="shrink-0" size={16} />
-          <strong>
+          <strong className="hidden min-[361px]:inline">
             Período<span className="hidden min-[641px]:inline"> da análise</span>
           </strong>
         </div>
-        <label className="order-3 flex w-full min-w-0 max-w-full flex-col gap-1 overflow-hidden min-[641px]:order-2 min-[641px]:w-[150px] min-[641px]:gap-1.5">
-          <span className="truncate text-[9px] font-semibold text-slate-500 min-[641px]:text-[10px]">
-            Data inicial
+        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 min-[641px]:contents">
+          <label className="flex w-full min-w-0 max-w-full flex-col overflow-hidden min-[641px]:order-2 min-[641px]:w-[150px] min-[641px]:gap-1.5">
+            <span className="sr-only truncate text-[10px] font-semibold text-slate-500 min-[641px]:not-sr-only">
+              Data inicial
+            </span>
+            <span className="relative block min-w-0 overflow-hidden">
+              <Input
+                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-2 min-[641px]:!py-2.5 min-[641px]:text-[12px]"
+                type="date"
+                max={to || undefined}
+                value={from}
+                onChange={(event) => changeFrom(event.target.value)}
+              />
+              {!from ? (
+                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
+                  Início
+                </span>
+              ) : null}
+            </span>
+          </label>
+          <span className="shrink-0 text-[9px] text-[#9d98a4] min-[641px]:order-3 min-[641px]:pb-3">
+            até
           </span>
-          <Input
-            className="block w-full min-w-0 max-w-full !px-2 text-[12px]"
-            type="date"
-            max={to || undefined}
-            value={from}
-            onChange={(event) => changeFrom(event.target.value)}
-          />
-        </label>
-        <span className="order-3 hidden pb-3 text-[9.5px] text-[#9d98a4] min-[641px]:block">
-          até
-        </span>
-        <label className="order-4 flex w-full min-w-0 max-w-full flex-col gap-1 overflow-hidden min-[641px]:w-[150px] min-[641px]:gap-1.5">
-          <span className="truncate text-[9px] font-semibold text-slate-500 min-[641px]:text-[10px]">
-            Data final
-          </span>
-          <Input
-            className="block w-full min-w-0 max-w-full !px-2 text-[12px]"
-            type="date"
-            min={from || undefined}
-            value={to}
-            onChange={(event) => changeTo(event.target.value)}
-          />
-        </label>
+          <label className="flex w-full min-w-0 max-w-full flex-col overflow-hidden min-[641px]:order-4 min-[641px]:w-[150px] min-[641px]:gap-1.5">
+            <span className="sr-only truncate text-[10px] font-semibold text-slate-500 min-[641px]:not-sr-only">
+              Data final
+            </span>
+            <span className="relative block min-w-0 overflow-hidden">
+              <Input
+                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-2 min-[641px]:!py-2.5 min-[641px]:text-[12px]"
+                type="date"
+                min={from || undefined}
+                value={to}
+                onChange={(event) => changeTo(event.target.value)}
+              />
+              {!to ? (
+                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
+                  Fim
+                </span>
+              ) : null}
+            </span>
+          </label>
+        </div>
         <button
           type="button"
-          className="order-2 min-h-8 w-auto justify-self-end rounded-lg border-0 bg-transparent px-1.5 py-1 text-[9.5px] font-bold text-violet-700 min-[641px]:order-5 min-[641px]:min-h-[42px] min-[641px]:px-3 min-[641px]:py-2.5 min-[641px]:text-[11px]"
+          className="min-h-7 shrink-0 rounded-lg border-0 bg-transparent px-1 py-0.5 text-[9.5px] font-bold text-violet-700 min-[641px]:order-5 min-[641px]:min-h-[42px] min-[641px]:px-3 min-[641px]:py-2.5 min-[641px]:text-[11px]"
           onClick={() => {
             setFrom("");
             setTo("");
           }}
         >
-          Todo período
+          <span className="min-[641px]:hidden">Todo</span>
+          <span className="hidden min-[641px]:inline">Todo período</span>
         </button>
       </div>
       {!data && !error ? <LoadingState /> : null}

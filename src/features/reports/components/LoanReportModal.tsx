@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
 import { date, money } from "@/shared/lib/format";
+import { hideBrowserPrintMetadata } from "@/shared/lib/print";
 import {
   paymentMethodSummary,
   paymentsForCharge,
@@ -122,6 +123,7 @@ export function LoanReportModal({
     const previousBodyOverflow = document.body.style.overflow;
     const previousBodyPadding = document.body.style.paddingRight;
     const previousHtmlOverflow = document.documentElement.style.overflow;
+    const restorePrintPage = hideBrowserPrintMetadata();
     let cleaned = false;
     const finish = () => {
       if (cleaned) return;
@@ -131,6 +133,7 @@ export function LoanReportModal({
       document.body.style.overflow = previousBodyOverflow;
       document.body.style.paddingRight = previousBodyPadding;
       document.documentElement.style.overflow = previousHtmlOverflow;
+      restorePrintPage();
       document.title = previousTitle;
     };
     const fallback = window.setTimeout(finish, 60_000);
@@ -182,7 +185,7 @@ export function LoanReportModal({
       description="Confira os dados antes de imprimir, salvar em PDF ou enviar ao cliente."
       size="lg"
     >
-      <div className="loan-report-print min-w-0 text-slate-700 print:text-black">
+      <div className="loan-report-print min-w-0 text-slate-700 print:p-[12mm] print:text-black">
         <header className="report-document-header mb-4 flex min-w-0 flex-col gap-3 border-b-2 border-violet-600 pb-3 min-[421px]:flex-row min-[421px]:items-center min-[421px]:justify-between print:flex-row print:items-center print:justify-between">
           <div className="report-document-brand h-2.5 w-24 rounded-full bg-gradient-to-r from-violet-500 to-violet-700 print:bg-violet-700" />
           <div className="report-document-id flex min-w-0 flex-col text-left min-[421px]:items-end min-[421px]:text-right print:items-end print:text-right">
