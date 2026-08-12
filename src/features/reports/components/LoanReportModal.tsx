@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Copy,
   FileText,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
 import { date, money } from "@/shared/lib/format";
+import { createPdfFile, sharePdfFile } from "@/shared/lib/pdf";
 import {
   paymentMethodSummary,
   paymentsForCharge,
@@ -108,12 +109,41 @@ export function LoanReportModal({
   onClose: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [preparingPdf, setPreparingPdf] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
   const charges = useMemo(
     () =>
       (loan?.type === "WEEKLY" ? loan.installments : loan?.monthlyCharges) ||
       [],
     [loan],
   );
+
+  useEffect(() => {
+    if (!loan || !reportRef.current) return;
+    let cancelled = false;
+    setPdfFile(null);
+    setPreparingPdf(true);
+
+    const timer = window.setTimeout(() => {
+      void createPdfFile(reportRef.current!, `Emprestimo-${loan.customer.name}`)
+        .then((file) => {
+          if (!cancelled) setPdfFile(file);
+        })
+        .catch(() => {
+          if (!cancelled) setPdfFile(null);
+        })
+        .finally(() => {
+          if (!cancelled) setPreparingPdf(false);
+        });
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [loan]);
 
   if (!loan) return null;
 
@@ -136,21 +166,21 @@ export function LoanReportModal({
   }
 
   async function shareReport() {
-    const text = reportText(loan!);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Empréstimo - ${loan!.customer.name}`,
-          text,
-        });
-        return;
-      } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") return;
+    if (!pdfFile || sharing) return;
+    setSharing(true);
+    try {
+      const result = await sharePdfFile(
+        pdfFile,
+        `Empréstimo - ${loan!.customer.name}`,
+      );
+      if (result === "downloaded") {
+        window.alert("O PDF foi baixado porque este navegador não compartilha arquivos diretamente.");
       }
+    } catch {
+      window.alert("Não foi possível gerar o PDF. Tente novamente.");
+    } finally {
+      setSharing(false);
     }
-
-    await copyReport();
-    window.alert("Resumo do empréstimo copiado.");
   }
 
   function sendWhatsapp() {
@@ -168,7 +198,7 @@ export function LoanReportModal({
       description="Confira os dados antes de compartilhar ou enviar ao cliente."
       size="lg"
     >
-      <div className="loan-report-print min-w-0 text-slate-700 print:p-[12mm] print:text-black">
+      <div ref={reportRef} className="loan-report-print min-w-0 bg-white text-slate-700 print:p-[12mm] print:text-black">
         <header className="report-document-header mb-4 flex min-w-0 flex-col gap-3 border-b-2 border-violet-600 pb-3 min-[421px]:flex-row min-[421px]:items-center min-[421px]:justify-between print:flex-row print:items-center print:justify-between">
           <div className="report-document-brand h-2.5 w-24 rounded-full bg-gradient-to-r from-violet-500 to-violet-700 print:bg-violet-700" />
           <div className="report-document-id flex min-w-0 flex-col text-left min-[421px]:items-end min-[421px]:text-right print:items-end print:text-right">
@@ -403,14 +433,18 @@ export function LoanReportModal({
         </section>
       </div>
 
-      <div className="report-actions mt-5 grid min-w-0 grid-cols-1 gap-2 border-t border-slate-100 pt-4 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:justify-end [&>button]:w-full min-[641px]:[&>button]:w-auto print:hidden">
+      <div data-pdf-ignore className="report-actions mt-5 grid min-w-0 grid-cols-1 gap-2 border-t border-slate-100 pt-4 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:justify-end [&>button]:w-full min-[641px]:[&>button]:w-auto print:hidden">
         <Button variant="secondary" onClick={copyReport}>
           <Copy size={17} /> {copied ? "Resumo copiado" : "Copiar resumo"}
         </Button>
         <Button variant="secondary" onClick={sendWhatsapp}>
           <MessageCircle size={17} /> Enviar no WhatsApp
         </Button>
-        <Button onClick={() => void shareReport()}>
+        <Button
+          disabled={!pdfFile}
+          loading={preparingPdf || sharing}
+          onClick={() => void shareReport()}
+        >
           <Share2 size={17} /> Compartilhar
         </Button>
       </div>

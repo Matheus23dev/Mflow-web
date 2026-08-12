@@ -1213,7 +1213,7 @@ export function LoansPage({
             }
           />
         ) : null}
-        <div className="loan-list grid min-w-0 gap-2 px-1.5 pb-2 min-[641px]:px-3 min-[641px]:pb-3 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:overflow-y-auto min-[861px]:overscroll-contain">
+        <div className="loan-list grid min-w-0 auto-rows-max content-start gap-2 px-1.5 pb-2 min-[641px]:px-3 min-[641px]:pb-3 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:overflow-y-auto min-[861px]:overscroll-contain">
           {filtered.map((loan) => {
             const progress = loan.summary.totalCount
               ? (loan.summary.paidCount / loan.summary.totalCount) * 100
@@ -1226,11 +1226,11 @@ export function LoansPage({
             const isOpen = expanded === loan.id;
             return (
               <article
-                className={`loan-card min-w-0 overflow-hidden rounded-xl border bg-white transition ${isOpen ? "expanded border-violet-200 shadow-[0_8px_24px_rgba(78,53,130,.08)]" : "border-[#ebe8ef]"}`}
+                className={`loan-card min-h-[62px] min-w-0 overflow-hidden rounded-xl border bg-white transition ${isOpen ? "expanded border-violet-200 shadow-[0_8px_24px_rgba(78,53,130,.08)]" : "border-[#ebe8ef]"}`}
                 key={loan.id}
               >
                 <button
-                  className="loan-main grid w-full min-w-0 grid-cols-[35px_minmax(0,1fr)_minmax(78px,auto)_17px] items-center gap-2.5 border-0 bg-transparent px-3 py-3 text-left text-[#3b3642] min-[641px]:grid-cols-[35px_minmax(140px,1fr)_minmax(90px,.7fr)_minmax(85px,.6fr)_18px] min-[641px]:gap-3 min-[641px]:px-4 min-[861px]:grid-cols-[36px_minmax(140px,1.2fr)_minmax(115px,.75fr)_minmax(100px,.7fr)_minmax(95px,.6fr)_18px]"
+                  className="loan-main grid min-h-[58px] w-full min-w-0 grid-cols-[35px_minmax(0,1fr)_minmax(78px,auto)_17px] items-center gap-2.5 border-0 bg-transparent px-3 py-3 text-left text-[#3b3642] min-[641px]:grid-cols-[35px_minmax(140px,1fr)_minmax(90px,.7fr)_minmax(85px,.6fr)_18px] min-[641px]:gap-3 min-[641px]:px-4 min-[861px]:grid-cols-[36px_minmax(140px,1.2fr)_minmax(115px,.75fr)_minmax(100px,.7fr)_minmax(95px,.6fr)_18px]"
                   onClick={() => setExpanded(isOpen ? null : loan.id)}
                 >
                   <Avatar name={loan.customer.name} />
