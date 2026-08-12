@@ -21,7 +21,7 @@ export const receiptsService = {
     return api<Receipt>(`/receipts/loans/${loanId}`, { method: "POST", body });
   },
   file: (id: string) =>
-    api<{ url: string; expiresIn: number }>(`/receipts/${id}/file`),
+    api<{ url: string; expiresIn: number }>(`/receipts/${id}/file-url`),
   remove: (id: string) =>
     api<{ success: boolean }>(`/receipts/${id}`, { method: "DELETE" }),
 };

@@ -22,15 +22,9 @@ export function ReceiptOpenButton({
       const { url } = await receiptsService.file(receipt.id);
       if (preview) {
         preview.opener = null;
-        preview.location.href = url;
+        preview.location.replace(url);
       } else {
-        const link = document.createElement("a");
-        link.href = url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        window.location.assign(url);
       }
     } catch (caught) {
       preview?.close();
