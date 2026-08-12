@@ -170,6 +170,51 @@ export function Input({
   );
 }
 
+function compactInputDate(value: string | number | readonly string[] | undefined) {
+  if (typeof value !== "string" || !value) return "";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year.slice(-2)}`;
+}
+
+export function CompactDateInput({
+  className = "",
+  placeholder = "Data",
+  value,
+  onClick,
+  ...props
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  return (
+    <span
+      className={`relative flex h-9 min-w-0 max-w-full items-center overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-800 transition focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100 ${className}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`block min-w-0 flex-1 truncate px-1.5 text-center text-[10px] font-medium [font-variant-numeric:tabular-nums] min-[641px]:px-2 min-[641px]:text-xs ${value ? "text-slate-700" : "text-slate-400"}`}
+      >
+        {compactInputDate(value) || placeholder}
+      </span>
+      <input
+        {...props}
+        data-ui="compact-date-input"
+        className="absolute inset-0 block h-full w-full min-w-0 max-w-full cursor-pointer border-0 opacity-0 [font-size:16px]"
+        type="date"
+        value={value}
+        onClick={(event) => {
+          onClick?.(event);
+          if (!event.defaultPrevented) {
+            try {
+              event.currentTarget.showPicker?.();
+            } catch {
+              // O Safari do iPhone abre o seletor pelo toque nativo.
+            }
+          }
+        }}
+      />
+    </span>
+  );
+}
+
 export function Select({
   className = "",
   ...props

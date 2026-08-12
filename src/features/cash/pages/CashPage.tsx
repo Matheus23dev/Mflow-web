@@ -12,6 +12,7 @@ import { date, money } from "@/shared/lib/format";
 import {
   Avatar,
   Button,
+  CompactDateInput,
   EmptyState,
   ErrorState,
   Field,
@@ -152,36 +153,22 @@ export function CashPage({
           </div>
           <div className="date-range flex w-full min-w-0 items-center gap-1 text-[#97939f] min-[641px]:w-auto min-[641px]:gap-[7px]">
             <CalendarRange className="shrink-0" size={18} />
-            <label className="relative min-w-0 flex-1 overflow-hidden min-[641px]:w-[132px] min-[641px]:flex-none">
-              <Input
-                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-3 min-[641px]:!py-2.5 min-[641px]:text-sm"
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                aria-label="Data inicial"
-              />
-              {!from ? (
-                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
-                  Início
-                </span>
-              ) : null}
-            </label>
+            <CompactDateInput
+              className="flex-1 min-[641px]:w-[132px] min-[641px]:flex-none"
+              placeholder="Início"
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              aria-label="Data inicial"
+            />
             <span className="shrink-0 text-[8px]">até</span>
-            <label className="relative min-w-0 flex-1 overflow-hidden min-[641px]:w-[132px] min-[641px]:flex-none">
-              <Input
-                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-3 min-[641px]:!py-2.5 min-[641px]:text-sm"
-                type="date"
-                value={to}
-                min={from}
-                onChange={(event) => setTo(event.target.value)}
-                aria-label="Data final"
-              />
-              {!to ? (
-                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
-                  Fim
-                </span>
-              ) : null}
-            </label>
+            <CompactDateInput
+              className="flex-1 min-[641px]:w-[132px] min-[641px]:flex-none"
+              placeholder="Fim"
+              value={to}
+              min={from}
+              onChange={(event) => setTo(event.target.value)}
+              aria-label="Data final"
+            />
           </div>
         </div>
         {!data && !pageError ? <LoadingState /> : null}

@@ -6,11 +6,10 @@ import {
   MapPin,
   MessageCircle,
   Phone,
-  Printer,
+  Share2,
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
 import { date, money } from "@/shared/lib/format";
-import { hideBrowserPrintMetadata } from "@/shared/lib/print";
 import {
   paymentMethodSummary,
   paymentsForCharge,
@@ -118,40 +117,6 @@ export function LoanReportModal({
 
   if (!loan) return null;
 
-  function printReport() {
-    const previousTitle = document.title;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPadding = document.body.style.paddingRight;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const restorePrintPage = hideBrowserPrintMetadata();
-    let cleaned = false;
-    const finish = () => {
-      if (cleaned) return;
-      cleaned = true;
-      window.clearTimeout(fallback);
-      window.removeEventListener("afterprint", finish);
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.paddingRight = previousBodyPadding;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      restorePrintPage();
-      document.title = previousTitle;
-    };
-    const fallback = window.setTimeout(finish, 60_000);
-
-    document.body.style.overflow = "visible";
-    document.body.style.paddingRight = "0";
-    document.documentElement.style.overflow = "visible";
-    document.title = `Contrato-${loan!.customer.name.replace(/[^a-z0-9]+/gi, "-")}`;
-    window.addEventListener("afterprint", finish, { once: true });
-
-    try {
-      window.print();
-    } catch {
-      finish();
-      window.alert("Não foi possível abrir a impressão neste navegador.");
-    }
-  }
-
   async function copyReport() {
     const text = reportText(loan!);
     try {
@@ -170,6 +135,24 @@ export function LoanReportModal({
     window.setTimeout(() => setCopied(false), 2200);
   }
 
+  async function shareReport() {
+    const text = reportText(loan!);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Empréstimo - ${loan!.customer.name}`,
+          text,
+        });
+        return;
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+      }
+    }
+
+    await copyReport();
+    window.alert("Resumo do empréstimo copiado.");
+  }
+
   function sendWhatsapp() {
     const url = `https://wa.me/${whatsappPhone(loan!.customer.phone)}?text=${encodeURIComponent(reportText(loan!))}`;
     window.open(url, "_blank", "noopener,noreferrer");
@@ -182,7 +165,7 @@ export function LoanReportModal({
       open
       onClose={onClose}
       title="Relatório do empréstimo"
-      description="Confira os dados antes de imprimir, salvar em PDF ou enviar ao cliente."
+      description="Confira os dados antes de compartilhar ou enviar ao cliente."
       size="lg"
     >
       <div className="loan-report-print min-w-0 text-slate-700 print:p-[12mm] print:text-black">
@@ -427,8 +410,8 @@ export function LoanReportModal({
         <Button variant="secondary" onClick={sendWhatsapp}>
           <MessageCircle size={17} /> Enviar no WhatsApp
         </Button>
-        <Button onClick={printReport}>
-          <Printer size={17} /> Imprimir / salvar PDF
+        <Button onClick={() => void shareReport()}>
+          <Share2 size={17} /> Compartilhar
         </Button>
       </div>
     </Modal>

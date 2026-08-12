@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -6,17 +6,16 @@ import {
   CalendarRange,
   CircleDollarSign,
   HandCoins,
-  Printer,
+  Share2,
   Target,
   TrendingUp,
   WalletCards,
 } from "lucide-react";
 import { money } from "@/shared/lib/format";
-import { hideBrowserPrintMetadata } from "@/shared/lib/print";
 import {
   Button,
+  CompactDateInput,
   ErrorState,
-  Input,
   LoadingState,
   PageHeader,
 } from "@/shared/ui";
@@ -25,7 +24,6 @@ import { useReports } from "../hooks/useReports";
 export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const reportRef = useRef<HTMLDivElement>(null);
   const { data, error, reload } = useReports(from, to, refreshKey);
 
   const chart = useMemo(() => {
@@ -53,50 +51,43 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
     if (value && from && value < from) setFrom(value);
   }
 
-  function printReports() {
-    if (!reportRef.current) return;
-    const printRoot = document.createElement("div");
-    printRoot.className = "hidden print:block print:p-[12mm]";
-    printRoot.setAttribute("aria-hidden", "true");
-    printRoot.appendChild(reportRef.current.cloneNode(true));
-    document.body.appendChild(printRoot);
-    const restorePrintPage = hideBrowserPrintMetadata();
+  async function shareReports() {
+    if (!data) return;
+    const period =
+      from || to ? `${from || "início"} até ${to || "hoje"}` : "Todo período";
+    const text = [
+      "Relatórios MFlow",
+      `Período: ${period}`,
+      `Total emprestado: ${money(data.metrics.totalLent)}`,
+      `Total recebido: ${money(data.metrics.totalReceived)}`,
+      `Saldo em aberto: ${money(data.metrics.openBalance)}`,
+      `Em atraso: ${money(data.metrics.overdue)}`,
+      `Lucro realizado: ${money(data.metrics.realizedProfit)}`,
+      `Lucro projetado: ${money(data.metrics.projectedProfit)}`,
+    ].join("\n");
 
-    const previousTitle = document.title;
-    let cleaned = false;
-    const finish = () => {
-      if (cleaned) return;
-      cleaned = true;
-      window.clearTimeout(fallback);
-      window.removeEventListener("afterprint", finish);
-      printRoot.remove();
-      restorePrintPage();
-      document.title = previousTitle;
-    };
-    const fallback = window.setTimeout(finish, 60_000);
-    window.addEventListener("afterprint", finish, { once: true });
-    document.title = `Relatorios-MFlow-${new Date().toISOString().slice(0, 10)}`;
-
-    try {
-      window.print();
-    } catch {
-      finish();
-      window.alert("Não foi possível abrir a impressão neste navegador.");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Relatórios MFlow", text });
+        return;
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+      }
     }
+
+    await navigator.clipboard.writeText(text);
+    window.alert("Resumo do relatório copiado.");
   }
 
   return (
-    <div
-      ref={reportRef}
-      className="page-enter data-page report-page min-w-0 max-w-full print:block print:h-auto print:overflow-visible min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden"
-    >
+    <div className="page-enter data-page report-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
       <PageHeader
         eyebrow="Análise"
         title="Relatórios"
         description="Entenda o retorno, o risco e a composição da sua carteira."
         action={
-          <Button variant="secondary" onClick={printReports}>
-            <Printer size={17} /> Imprimir
+          <Button variant="secondary" onClick={() => void shareReports()}>
+            <Share2 size={17} /> Compartilhar
           </Button>
         }
       />
@@ -112,20 +103,12 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
             <span className="sr-only truncate text-[10px] font-semibold text-slate-500 min-[641px]:not-sr-only">
               Data inicial
             </span>
-            <span className="relative block min-w-0 overflow-hidden">
-              <Input
-                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-2 min-[641px]:!py-2.5 min-[641px]:text-[12px]"
-                type="date"
-                max={to || undefined}
-                value={from}
-                onChange={(event) => changeFrom(event.target.value)}
-              />
-              {!from ? (
-                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
-                  Início
-                </span>
-              ) : null}
-            </span>
+            <CompactDateInput
+              placeholder="Início"
+              max={to || undefined}
+              value={from}
+              onChange={(event) => changeFrom(event.target.value)}
+            />
           </label>
           <span className="shrink-0 text-[9px] text-[#9d98a4] min-[641px]:order-3 min-[641px]:pb-3">
             até
@@ -134,20 +117,12 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
             <span className="sr-only truncate text-[10px] font-semibold text-slate-500 min-[641px]:not-sr-only">
               Data final
             </span>
-            <span className="relative block min-w-0 overflow-hidden">
-              <Input
-                className="block h-9 min-h-9 w-full min-w-0 max-w-full !px-1.5 !py-0 text-[16px] leading-none [font-variant-numeric:tabular-nums] [&::-webkit-date-and-time-value]:min-h-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:min-w-0 [&::-webkit-datetime-edit]:p-0 min-[641px]:h-auto min-[641px]:min-h-0 min-[641px]:!px-2 min-[641px]:!py-2.5 min-[641px]:text-[12px]"
-                type="date"
-                min={from || undefined}
-                value={to}
-                onChange={(event) => changeTo(event.target.value)}
-              />
-              {!to ? (
-                <span className="pointer-events-none absolute inset-y-0 left-1.5 flex items-center text-[10px] font-medium text-slate-400 min-[641px]:hidden">
-                  Fim
-                </span>
-              ) : null}
-            </span>
+            <CompactDateInput
+              placeholder="Fim"
+              min={from || undefined}
+              value={to}
+              onChange={(event) => changeTo(event.target.value)}
+            />
           </label>
         </div>
         <button
