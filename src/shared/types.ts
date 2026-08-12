@@ -76,6 +76,7 @@ export type Loan = {
   id: string;
   customerId: string;
   customer: Pick<Customer, "id" | "name" | "phone" | "cpf" | "address">;
+  description?: string | null;
   type: LoanType;
   frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY";
   principalAmount: string;

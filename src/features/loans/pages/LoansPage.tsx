@@ -34,6 +34,7 @@ import {
   PageHeader,
   Select,
   StatusBadge,
+  Textarea,
 } from "@/shared/ui";
 import { useLoans } from "../hooks/useLoans";
 import { loansService } from "../services/loans.service";
@@ -110,6 +111,7 @@ export function LoanFormModal({
     try {
       const created = await loansService.create({
         customerId: data.get("customerId"),
+        description: data.get("description"),
         type,
         principalAmount: numeric("principalAmount"),
         lateFeePerDay: numeric("lateFeePerDay"),
@@ -325,6 +327,18 @@ export function LoanFormModal({
             </>
           )}
           <div className={fieldSpanClass}>
+            <Field
+              label="Descrição do empréstimo"
+              hint="Opcional. Use para registrar o motivo, combinado ou uma observação importante."
+            >
+              <Textarea
+                name="description"
+                maxLength={1000}
+                placeholder="Ex.: capital para compra de mercadoria; pagamento combinado toda sexta-feira."
+              />
+            </Field>
+          </div>
+          <div className={fieldSpanClass}>
             <ReceiptUploadField
               label="Comprovante do dinheiro emprestado"
               file={receiptFile}
@@ -368,6 +382,7 @@ export function EditLoanModal({
   const [lateFeePerDay, setLateFeePerDay] = useState(
     () => loan?.lateFeePerDay || "0",
   );
+  const [description, setDescription] = useState(() => loan?.description || "");
   const [frequency, setFrequency] = useState<"WEEKLY" | "BIWEEKLY" | "MONTHLY">(
     () => loan?.frequency || "WEEKLY",
   );
@@ -435,6 +450,7 @@ export function EditLoanModal({
     const body: Record<string, unknown> = {
       principalAmount: Number(principalAmount),
       lateFeePerDay: Number(lateFeePerDay),
+      description,
     };
 
     if (isWeekly) {
@@ -653,6 +669,20 @@ export function EditLoanModal({
           </>
         )}
 
+        <div className={fieldSpanClass}>
+          <Field
+            label="Descrição do empréstimo"
+            hint="Opcional. A descrição aparece somente nos detalhes do sistema."
+          >
+            <Textarea
+              maxLength={1000}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Adicione uma observação sobre este contrato."
+            />
+          </Field>
+        </div>
+
         {error ? (
           <div className={`${fieldSpanClass} ${formErrorClass} form-error`}>
             {error}
@@ -757,6 +787,7 @@ function RenewLoanModal({
   const [lateFeePerDay, setLateFeePerDay] = useState(
     () => loan?.lateFeePerDay || "0",
   );
+  const [description, setDescription] = useState(() => loan?.description || "");
   const [paymentMethod, setPaymentMethod] = useState("PIX");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -764,7 +795,7 @@ function RenewLoanModal({
 
   if (!loan) return null;
 
-  const previousBalance = Number(loan.principalBalance || 0);
+  const previousBalance = Number(loan.summary.openBalance || 0);
   const entry = Number(entryAmount || 0);
   const refinancedAmount = Math.max(0, previousBalance - entry);
   const newMoney = Number(newMoneyReleased || 0);
@@ -800,6 +831,7 @@ function RenewLoanModal({
         firstDueDate,
         frequency,
         paymentMethod,
+        description,
       });
       let receiptWarning: string | undefined;
       if (receiptFile) {
@@ -838,7 +870,7 @@ function RenewLoanModal({
           registrada como saída somente a quantia adicional entregue ao cliente.
         </div>
 
-        <Field label="Saldo principal restante">
+        <Field label="Saldo restante das parcelas">
           <Input value={money(previousBalance)} disabled />
         </Field>
         <Field
@@ -942,6 +974,19 @@ function RenewLoanModal({
           />
         </Field>
         <div className={fieldSpanClass}>
+          <Field
+            label="Descrição do novo empréstimo"
+            hint="Opcional. Você poderá editar essa descrição depois."
+          >
+            <Textarea
+              maxLength={1000}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Adicione uma observação sobre a renovação."
+            />
+          </Field>
+        </div>
+        <div className={fieldSpanClass}>
           <ReceiptUploadField
             label="Comprovante do dinheiro novo entregue"
             file={receiptFile}
@@ -953,7 +998,7 @@ function RenewLoanModal({
           className={`${fieldSpanClass} grid min-w-0 grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 min-[421px]:grid-cols-2 min-[641px]:grid-cols-3 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&_span]:text-[9.5px] [&_span]:text-slate-500 [&_strong]:mt-1 [&_strong]:break-words [&_strong]:text-[13px]`}
         >
           <div>
-            <span>Saldo principal restante</span>
+            <span>Saldo restante das parcelas</span>
             <strong>{money(previousBalance)}</strong>
           </div>
           <div>
@@ -1095,9 +1140,13 @@ export function LoansPage({
 
   const filtered = useMemo(
     () =>
-      loans?.filter((loan) =>
-        loan.customer.name.toLowerCase().includes(search.toLowerCase()),
-      ) || [],
+      loans?.filter((loan) => {
+        const term = search.toLowerCase();
+        return (
+          loan.customer.name.toLowerCase().includes(term) ||
+          loan.description?.toLowerCase().includes(term)
+        );
+      }) || [],
     [loans, search],
   );
 
@@ -1121,7 +1170,7 @@ export function LoansPage({
               className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[#373340] outline-none placeholder:text-[#aaa6b1] min-[641px]:text-[13px]"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por cliente"
+              placeholder="Buscar por cliente ou descrição"
             />
           </div>
           <div className="toolbar-filters grid min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:w-auto min-[641px]:items-center [&>svg]:hidden min-[641px]:[&>svg]:block [&_[data-ui=input]]:w-full min-[641px]:[&_[data-ui=input]]:w-[150px]">
@@ -1234,6 +1283,16 @@ export function LoansPage({
                 <LoanProgress value={progress} />
                 {isOpen ? (
                   <div className="loan-detail min-w-0 border-t border-[#efedf2] bg-[#fdfcff] px-3 pb-4 pt-3 min-[641px]:px-4">
+                    {loan.description ? (
+                      <div className="mb-3 min-w-0 rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2.5 text-xs leading-5 text-slate-700">
+                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-violet-600">
+                          Descrição
+                        </span>
+                        <p className="m-0 whitespace-pre-wrap break-words">
+                          {loan.description}
+                        </p>
+                      </div>
+                    ) : null}
                     <div className="loan-detail-stats mb-4 grid min-w-0 grid-cols-2 gap-2 min-[641px]:grid-cols-4 [&>div]:flex [&>div]:min-w-0 [&>div]:flex-col [&>div]:rounded-[10px] [&>div]:bg-white [&>div]:px-3 [&>div]:py-2.5 [&_span]:text-[10px] [&_span]:text-[#9995a1] [&_strong]:mt-1 [&_strong]:break-words [&_strong]:text-xs">
                       <div>
                         <span>Valor principal</span>
@@ -1369,10 +1428,7 @@ export function LoansPage({
                         );
                       })}
                     </div>
-                    <ReceiptList
-                      loan={loan}
-                      onChanged={load}
-                    />
+                    <ReceiptList loan={loan} onChanged={load} />
                   </div>
                 ) : null}
               </article>
