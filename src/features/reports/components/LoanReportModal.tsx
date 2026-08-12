@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Copy,
   FileText,
@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
 import { date, money } from "@/shared/lib/format";
-import { createPdfFile, sharePdfFile } from "@/shared/lib/pdf";
+import { createLoanDocumentPdf } from "@/shared/lib/documentPdf";
+import { sharePdfFile } from "@/shared/lib/pdf";
 import {
   paymentMethodSummary,
   paymentsForCharge,
@@ -110,9 +111,9 @@ export function LoanReportModal({
 }) {
   const [copied, setCopied] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [preparingPdf, setPreparingPdf] = useState(false);
+  const [pdfLoanId, setPdfLoanId] = useState("");
   const [sharing, setSharing] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
+  const preparingPdf = loan ? pdfLoanId !== loan.id : false;
   const charges = useMemo(
     () =>
       (loan?.type === "WEEKLY" ? loan.installments : loan?.monthlyCharges) ||
@@ -121,21 +122,22 @@ export function LoanReportModal({
   );
 
   useEffect(() => {
-    if (!loan || !reportRef.current) return;
+    if (!loan) return;
     let cancelled = false;
-    setPdfFile(null);
-    setPreparingPdf(true);
 
     const timer = window.setTimeout(() => {
-      void createPdfFile(reportRef.current!, `Emprestimo-${loan.customer.name}`)
+      void createLoanDocumentPdf(loan)
         .then((file) => {
-          if (!cancelled) setPdfFile(file);
+          if (!cancelled) {
+            setPdfFile(file);
+            setPdfLoanId(loan.id);
+          }
         })
         .catch(() => {
-          if (!cancelled) setPdfFile(null);
-        })
-        .finally(() => {
-          if (!cancelled) setPreparingPdf(false);
+          if (!cancelled) {
+            setPdfFile(null);
+            setPdfLoanId(loan.id);
+          }
         });
     }, 250);
 
@@ -166,7 +168,7 @@ export function LoanReportModal({
   }
 
   async function shareReport() {
-    if (!pdfFile || sharing) return;
+    if (!pdfFile || preparingPdf || sharing) return;
     setSharing(true);
     try {
       const result = await sharePdfFile(
@@ -198,7 +200,7 @@ export function LoanReportModal({
       description="Confira os dados antes de compartilhar ou enviar ao cliente."
       size="lg"
     >
-      <div ref={reportRef} className="loan-report-print min-w-0 bg-white text-slate-700 print:p-[12mm] print:text-black">
+      <div className="loan-report-print min-w-0 bg-white text-slate-700 print:p-[12mm] print:text-black">
         <header className="report-document-header mb-4 flex min-w-0 flex-col gap-3 border-b-2 border-violet-600 pb-3 min-[421px]:flex-row min-[421px]:items-center min-[421px]:justify-between print:flex-row print:items-center print:justify-between">
           <div className="report-document-brand h-2.5 w-24 rounded-full bg-gradient-to-r from-violet-500 to-violet-700 print:bg-violet-700" />
           <div className="report-document-id flex min-w-0 flex-col text-left min-[421px]:items-end min-[421px]:text-right print:items-end print:text-right">
@@ -441,7 +443,7 @@ export function LoanReportModal({
           <MessageCircle size={17} /> Enviar no WhatsApp
         </Button>
         <Button
-          disabled={!pdfFile}
+          disabled={!pdfFile || preparingPdf}
           loading={preparingPdf || sharing}
           onClick={() => void shareReport()}
         >

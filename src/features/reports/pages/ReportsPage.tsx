@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -12,7 +12,8 @@ import {
   WalletCards,
 } from "lucide-react";
 import { money } from "@/shared/lib/format";
-import { createPdfFile, sharePdfFile } from "@/shared/lib/pdf";
+import { createReportsDocumentPdf } from "@/shared/lib/documentPdf";
+import { sharePdfFile } from "@/shared/lib/pdf";
 import {
   Button,
   CompactDateInput,
@@ -26,10 +27,11 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [preparingPdf, setPreparingPdf] = useState(false);
+  const [pdfSignature, setPdfSignature] = useState("");
   const [sharing, setSharing] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
   const { data, error, reload } = useReports(from, to, refreshKey);
+  const currentPdfSignature = data ? `${from}|${to}|${refreshKey}` : "";
+  const preparingPdf = Boolean(data) && pdfSignature !== currentPdfSignature;
 
   const chart = useMemo(() => {
     if (!data) return [];
@@ -47,24 +49,23 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   }, [data]);
 
   useEffect(() => {
-    if (!data || !reportRef.current) return;
+    if (!data) return;
     let cancelled = false;
-    setPdfFile(null);
-    setPreparingPdf(true);
+    const signature = currentPdfSignature;
 
     const timer = window.setTimeout(() => {
-      void createPdfFile(
-        reportRef.current!,
-        `Relatorios-MFlow-${new Date().toISOString().slice(0, 10)}`,
-      )
+      void createReportsDocumentPdf(data, from, to)
         .then((file) => {
-          if (!cancelled) setPdfFile(file);
+          if (!cancelled) {
+            setPdfFile(file);
+            setPdfSignature(signature);
+          }
         })
         .catch(() => {
-          if (!cancelled) setPdfFile(null);
-        })
-        .finally(() => {
-          if (!cancelled) setPreparingPdf(false);
+          if (!cancelled) {
+            setPdfFile(null);
+            setPdfSignature(signature);
+          }
         });
     }, 250);
 
@@ -72,7 +73,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [data]);
+  }, [currentPdfSignature, data, from, to]);
 
   function changeFrom(value: string) {
     setFrom(value);
@@ -85,7 +86,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   }
 
   async function shareReports() {
-    if (!pdfFile || sharing) return;
+    if (!pdfFile || preparingPdf || sharing) return;
     setSharing(true);
     try {
       const result = await sharePdfFile(pdfFile, "Relatórios MFlow");
@@ -100,10 +101,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
   }
 
   return (
-    <div
-      ref={reportRef}
-      className="page-enter data-page report-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden"
-    >
+    <div className="page-enter data-page report-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
       <PageHeader
         eyebrow="Análise"
         title="Relatórios"
@@ -112,7 +110,7 @@ export function ReportsPage({ refreshKey }: { refreshKey: number }) {
           <Button
             data-pdf-ignore
             variant="secondary"
-            disabled={!pdfFile}
+            disabled={!pdfFile || preparingPdf}
             loading={preparingPdf || sharing}
             onClick={() => void shareReports()}
           >
