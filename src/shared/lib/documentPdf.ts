@@ -106,7 +106,7 @@ function section(pdf: Pdf, title: string, y: number) {
   const width = pdf.internal.pageSize.getWidth();
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.purple);
-  pdf.setFontSize(8.5);
+  pdf.setFontSize(9.5);
   pdf.text(title.toUpperCase(), 12, y);
   drawColor(pdf, C.border);
   pdf.setLineWidth(0.25);
@@ -114,15 +114,15 @@ function section(pdf: Pdf, title: string, y: number) {
 }
 
 function field(pdf: Pdf, x: number, y: number, width: number, label: string, value: string) {
-  card(pdf, x, y, width, 20, C.soft);
+  card(pdf, x, y, width, 22, C.soft);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(7.4);
-  pdf.text(label, x + 4, y + 6.7);
+  pdf.setFontSize(8.5);
+  pdf.text(label, x + 4, y + 7.4);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, value, width - 8, 10.5, 7);
-  pdf.text(value, x + 4, y + 14.5);
+  fit(pdf, value, width - 8, 12, 8);
+  pdf.text(value, x + 4, y + 16.3);
 }
 
 function footer(pdf: Pdf) {
@@ -169,27 +169,27 @@ function chargeRow(pdf: Pdf, loan: Loan, charge: Charge, x: number, y: number, w
   const { values, details } = chargeInfo(loan, charge);
   const color = charge.status === "PAID" ? C.green : charge.status === "OVERDUE" ? C.red : charge.status === "PARTIAL" ? C.purple : C.amber;
   const soft = charge.status === "PAID" ? C.greenSoft : charge.status === "OVERDUE" ? C.redSoft : charge.status === "PARTIAL" ? C.purpleSoft : C.amberSoft;
-  card(pdf, x, y, width, 20);
+  card(pdf, x, y, width, 25);
   fill(pdf, soft);
-  pdf.roundedRect(x + 3, y + 3, 18, 14, 2, 2, "F");
+  pdf.roundedRect(x + 3, y + 3, 19, 19, 2, 2, "F");
   pdf.setFont("helvetica", "bold");
   textColor(pdf, color);
-  pdf.setFontSize(7.5);
-  pdf.text(charge.number ? `#${charge.number}` : charge.referenceMonth || "Juros", x + 12, y + 11.1, { align: "center" });
+  pdf.setFontSize(9);
+  pdf.text(charge.number ? `#${charge.number}` : charge.referenceMonth || "Juros", x + 12.5, y + 14.8, { align: "center" });
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  pdf.setFontSize(8.4);
-  pdf.text(charge.number ? `Parcela ${charge.number}` : `Juros ${charge.referenceMonth}`, x + 24, y + 6.8);
+  pdf.setFontSize(10.2);
+  pdf.text(charge.number ? `Parcela ${charge.number}` : `Juros ${charge.referenceMonth}`, x + 25, y + 8);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(7);
-  pdf.text(date(charge.dueDate), x + 24, y + 12);
-  fit(pdf, details, width - 54, 6.4, 5.3);
-  pdf.text(details, x + 24, y + 17);
+  pdf.setFontSize(8.2);
+  pdf.text(date(charge.dueDate), x + 25, y + 14.7);
+  fit(pdf, details, width - 29, 7.4, 5.8);
+  pdf.text(details, x + 25, y + 21.5);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, color);
-  fit(pdf, money(values.updatedAmount), 28, 9.4, 7);
-  pdf.text(money(values.updatedAmount), x + width - 4, y + 11.3, { align: "right" });
+  fit(pdf, money(values.updatedAmount), 30, 11, 8);
+  pdf.text(money(values.updatedAmount), x + width - 4, y + 13.8, { align: "right" });
 }
 
 export async function createLoanDocumentPdf(loan: Loan) {
@@ -204,28 +204,28 @@ export async function createLoanDocumentPdf(loan: Loan) {
   card(pdf, 12, 29, usable, 32);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, loan.customer.name, 116, 14.5, 10);
+  fit(pdf, loan.customer.name, 116, 16.5, 11);
   pdf.text(loan.customer.name, 17, 39);
   fill(pdf, C.purpleSoft);
   pdf.roundedRect(139, 33, 54, 12, 2, 2, "F");
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.purple);
-  pdf.setFontSize(6.6);
+  pdf.setFontSize(7.4);
   pdf.text("CONTRATO", 143, 37.5);
   pdf.setFont("helvetica", "bold");
-  fit(pdf, loan.id, 46, 8.2, 6.5);
+  fit(pdf, loan.id, 46, 9.4, 7.2);
   pdf.text(loan.id, 143, 42.5);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(8.5);
+  pdf.setFontSize(9.7);
   pdf.text(`Telefone: ${loan.customer.phone}`, 17, 49);
   pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 49);
   const address = `Endereço: ${loan.customer.address || "Não informado"}`;
-  fit(pdf, address, 121, 8.2, 6.8);
+  fit(pdf, address, 121, 9.4, 7.5);
   pdf.text(address, 17, 56.5);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(7.5);
+  pdf.setFontSize(8.5);
   pdf.text(`PDF gerado em: ${date(new Date())}`, 193, 56.5, { align: "right" });
 
   section(pdf, "Resumo financeiro", 70);
@@ -238,15 +238,15 @@ export async function createLoanDocumentPdf(loan: Loan) {
   const summaryWidth = (usable - gap * 3) / 4;
   summary.forEach(([label, value, tone], index) => {
     const x = 12 + index * (summaryWidth + gap);
-    card(pdf, x, 75, summaryWidth, 23, tone, tone);
+    card(pdf, x, 75, summaryWidth, 25, tone, tone);
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
-    fit(pdf, label, summaryWidth - 6, 7, 5.8);
-    pdf.text(label, x + 3, 82);
+    fit(pdf, label, summaryWidth - 6, 8.2, 6.4);
+    pdf.text(label, x + 3, 83);
     pdf.setFont("helvetica", "bold");
     textColor(pdf, C.text);
-    fit(pdf, value, summaryWidth - 6, 10.8, 7.5);
-    pdf.text(value, x + 3, 92.2);
+    fit(pdf, value, summaryWidth - 6, 12.6, 8.5);
+    pdf.text(value, x + 3, 94.2);
   });
 
   section(pdf, "Condições do contrato", 108);
@@ -269,7 +269,7 @@ export async function createLoanDocumentPdf(loan: Loan) {
   ];
   const conditionWidth = (usable - gap * 2) / 3;
   conditions.slice(0, 6).forEach(([label, value], index) => {
-    field(pdf, 12 + (index % 3) * (conditionWidth + gap), 113 + Math.floor(index / 3) * 23, conditionWidth, label, value);
+    field(pdf, 12 + (index % 3) * (conditionWidth + gap), 113 + Math.floor(index / 3) * 25, conditionWidth, label, value);
   });
 
   let index = 0;
@@ -289,8 +289,8 @@ export async function createLoanDocumentPdf(loan: Loan) {
       pdf.text("Nenhuma cobrança registrada.", 12, agendaY + 6);
       break;
     }
-    const rowHeight = 23;
-    const rows = Math.max(1, Math.floor((276 - agendaY) / rowHeight));
+    const rowHeight = 27;
+    const rows = Math.max(1, Math.floor((281 - agendaY) / rowHeight));
     const pageCharges = charges.slice(index, index + rows * 2);
     const firstColumn = Math.ceil(pageCharges.length / 2);
     const width = (usable - gap) / 2;
