@@ -52,14 +52,14 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         ["Contratos", String(weekly.activeContracts)],
       ]
     : [
-        ["Capital em circulação", money(monthly.capitalInCirculation)],
+        ["Juros em aberto", money(monthly.interestRemainingThisMonth + monthly.previousInterestOverdue)],
         ["Atrasos anteriores", money(monthly.previousInterestOverdue)],
         ["Capital devolvido", money(monthly.principalReturnedThisMonth)],
         ["Rentabilidade", percentage(monthly.monthlyYieldRate)],
       ];
 
   return (
-    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
+    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden min-[861px]:[&>div:first-child]:mb-3 min-[861px]:[&>div:first-child_h1]:text-[28px] min-[861px]:[&>div:first-child_p:last-child]:mt-1 min-[861px]:[&>div:first-child_p:last-child]:leading-5">
       <PageHeader
         eyebrow={`${greeting} · ${new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date())}`}
         title="Visão geral da operação"
@@ -67,37 +67,37 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         action={<Button onClick={onNewLoan}><Plus size={18} /> Novo empréstimo</Button>}
       />
 
-      <div className="rounded-2xl border border-[#e6e2ec] bg-white p-2 shadow-[0_7px_25px_rgba(47,38,73,0.06)]">
-        <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[#f5f3f8] p-1" role="tablist" aria-label="Modalidade da carteira">
-          <button type="button" role="tab" aria-selected={isWeekly} onClick={() => setSelectedPortfolio("weekly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs ${isWeekly ? "bg-white text-violet-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><HandCoins className="shrink-0" size={17} /><span className="truncate">Parcelados</span></button>
-          <button type="button" role="tab" aria-selected={!isWeekly} onClick={() => setSelectedPortfolio("monthly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs ${!isWeekly ? "bg-white text-emerald-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><CircleDollarSign className="shrink-0" size={17} /><span className="truncate">Juros mensal</span></button>
+      <div className="rounded-2xl border border-[#e6e2ec] bg-white p-2 shadow-[0_7px_25px_rgba(47,38,73,0.06)] min-[861px]:p-1.5">
+        <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[#f5f3f8] p-1 min-[861px]:gap-1 min-[861px]:p-0.5" role="tablist" aria-label="Modalidade da carteira">
+          <button type="button" role="tab" aria-selected={isWeekly} onClick={() => setSelectedPortfolio("weekly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs min-[861px]:py-1.5 ${isWeekly ? "bg-white text-violet-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><HandCoins className="shrink-0" size={17} /><span className="truncate">Parcelados</span></button>
+          <button type="button" role="tab" aria-selected={!isWeekly} onClick={() => setSelectedPortfolio("monthly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs min-[861px]:py-1.5 ${!isWeekly ? "bg-white text-emerald-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><CircleDollarSign className="shrink-0" size={17} /><span className="truncate">Juros mensal</span></button>
         </div>
 
-        <section className={`mt-2 overflow-hidden rounded-xl border p-3.5 min-[641px]:p-4 ${isWeekly ? "border-violet-100 bg-gradient-to-br from-[#fbfaff] to-[#f4f0ff]" : "border-emerald-100 bg-gradient-to-br from-white to-emerald-50/80"}`}>
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
-            <div className="flex min-w-0 items-center gap-2.5"><span className={`grid size-9 shrink-0 place-items-center rounded-[10px] ${isWeekly ? "bg-violet-100 text-violet-700" : "bg-emerald-100 text-emerald-700"}`}>{isWeekly ? <HandCoins size={20} /> : <CircleDollarSign size={20} />}</span><div className="min-w-0"><span className={`text-[9px] font-extrabold uppercase tracking-[1.2px] ${isWeekly ? "text-violet-600" : "text-emerald-600"}`}>Carteira selecionada</span><h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-900 min-[421px]:text-base">{isWeekly ? "Empréstimos parcelados" : "Juros mensal"}</h2></div></div>
+        <section className={`mt-2 overflow-hidden rounded-xl border p-3.5 min-[641px]:p-4 min-[861px]:mt-1.5 min-[861px]:p-2.5 ${isWeekly ? "border-violet-100 bg-gradient-to-br from-[#fbfaff] to-[#f4f0ff]" : "border-emerald-100 bg-gradient-to-br from-white to-emerald-50/80"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2.5 min-[861px]:gap-2">
+            <div className="flex min-w-0 items-center gap-2.5 min-[861px]:gap-2"><span className={`grid size-9 shrink-0 place-items-center rounded-[10px] min-[861px]:size-8 min-[861px]:rounded-lg ${isWeekly ? "bg-violet-100 text-violet-700" : "bg-emerald-100 text-emerald-700"}`}>{isWeekly ? <HandCoins size={20} /> : <CircleDollarSign size={20} />}</span><div className="min-w-0"><span className={`text-[9px] font-extrabold uppercase tracking-[1.2px] ${isWeekly ? "text-violet-600" : "text-emerald-600"}`}>Carteira selecionada</span><h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-900 min-[421px]:text-base min-[861px]:text-sm">{isWeekly ? "Empréstimos parcelados" : "Juros mensal"}</h2></div></div>
             <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${isWeekly ? "bg-violet-100 text-violet-700" : "bg-emerald-100 text-emerald-700"}`}>{isWeekly ? weekly.activeContracts : monthly.activeContracts} ativos</span>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4 min-[641px]:gap-2.5">
+          <div className="mt-3 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4 min-[641px]:gap-2.5 min-[861px]:mt-2 min-[861px]:gap-2">
             {mainPortfolioMetrics.map(([label, value, caption], index) => (
-              <div className="min-w-0 rounded-xl border border-white bg-white/90 p-3 shadow-[0_2px_8px_rgba(45,37,67,0.04)]" key={label}>
+              <div className="min-w-0 rounded-xl border border-white bg-white/90 p-3 shadow-[0_2px_8px_rgba(45,37,67,0.04)] min-[861px]:rounded-lg min-[861px]:p-2" key={label}>
                 <span className="block truncate text-[10px] text-slate-500 min-[421px]:text-[10.5px]">{label}</span>
-                <strong className={`mt-1 block overflow-hidden text-[clamp(14px,4.4vw,21px)] font-extrabold tracking-[-0.5px] text-ellipsis whitespace-nowrap ${!isWeekly && index === 2 ? "text-emerald-700" : "text-slate-900"}`}>{value}</strong>
-                <small className="mt-1 hidden text-[9.5px] leading-4 text-slate-400 min-[641px]:block">{caption}</small>
+                <strong className={`mt-1 block overflow-hidden text-[clamp(14px,4.4vw,21px)] font-extrabold tracking-[-0.5px] text-ellipsis whitespace-nowrap min-[861px]:mt-0.5 min-[861px]:text-[17px] ${!isWeekly && index === 2 ? "text-emerald-700" : "text-slate-900"}`}>{value}</strong>
+                <small className="mt-1 hidden text-[9.5px] leading-4 text-slate-400 min-[641px]:block min-[861px]:hidden">{caption}</small>
               </div>
             ))}
           </div>
 
-          <div className="mt-2 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4">
-            {secondaryPortfolioMetrics.map(([label, value]) => <div className="min-w-0 rounded-lg border border-slate-200/80 bg-white/55 px-2.5 py-2" key={label}><span className="block truncate text-[9.5px] text-slate-500">{label}</span><strong className="mt-0.5 block overflow-hidden text-xs text-slate-800 text-ellipsis whitespace-nowrap">{value}</strong></div>)}
+          <div className="mt-2 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4 min-[861px]:mt-1.5 min-[861px]:gap-1.5">
+            {secondaryPortfolioMetrics.map(([label, value]) => <div className="min-w-0 rounded-lg border border-slate-200/80 bg-white/55 px-2.5 py-2 min-[861px]:px-2 min-[861px]:py-1.5" key={label}><span className="block truncate text-[9.5px] text-slate-500">{label}</span><strong className="mt-0.5 block overflow-hidden text-xs text-slate-800 text-ellipsis whitespace-nowrap min-[861px]:text-[11px]">{value}</strong></div>)}
           </div>
 
-          <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 pt-2.5"><p className="m-0 hidden text-[10.5px] leading-5 text-slate-500 min-[641px]:block">{isWeekly ? "Juros de atraso ficam separados dos juros contratados." : "Juros futuros ainda não gerados não entram nos totais."}</p><button className={`ml-auto inline-flex items-center gap-1 border-0 bg-transparent p-0 text-[11px] font-bold ${isWeekly ? "text-violet-700" : "text-emerald-700"}`} onClick={() => onNavigate("loans")}>Ver empréstimos <ArrowRight size={14} /></button></div>
+          <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 pt-2.5 min-[861px]:mt-1.5 min-[861px]:pt-1.5"><p className="m-0 hidden text-[10.5px] leading-5 text-slate-500 min-[641px]:block min-[861px]:text-[10px] min-[861px]:leading-4">{isWeekly ? "Juros de atraso ficam separados dos juros contratados." : "Juros futuros ainda não gerados não entram nos totais."}</p><button className={`ml-auto inline-flex items-center gap-1 border-0 bg-transparent p-0 text-[11px] font-bold ${isWeekly ? "text-violet-700" : "text-emerald-700"}`} onClick={() => onNavigate("loans")}>Ver empréstimos <ArrowRight size={14} /></button></div>
         </section>
       </div>
 
-      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:min-h-0 min-[861px]:flex-1 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-4">
+      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:mt-2 min-[861px]:min-h-0 min-[861px]:flex-1 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-4">
         <section className="panel upcoming-panel overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[861px]:flex min-[861px]:min-h-0 min-[861px]:flex-col">
           <div className="panel-header flex items-center justify-between gap-[15px] px-5 pb-[14px] pt-[19px]"><div><span className="eyebrow m-0 text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Agenda financeira</span><h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39]">Próximas cobranças</h2></div><button className="text-button inline-flex items-center gap-[5px] border-0 bg-transparent p-0 text-[11px] font-bold text-violet-600" onClick={() => onNavigate("collections")}>Ver agenda completa <ArrowRight size={15} /></button></div>
           {data.upcoming.length ? (
