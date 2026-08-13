@@ -9,62 +9,16 @@ import {
 import { useState } from "react";
 import { compactDate, money } from "@/shared/lib/format";
 import type { AppPage } from "@/shared/layout/AppShell";
-import type { DashboardData } from "@/shared/types";
-import { Avatar, Button, EmptyState, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/shared/ui";
+import { Avatar, Button, EmptyState, ErrorState, LoadingState, PageHeader, StatusBadge } from "@/shared/ui";
 import { useDashboard } from "../hooks/useDashboard";
 
 type PortfolioKind = "weekly" | "monthly";
 
 const percentage = (value: number) => `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value)}%`;
 
-function PortfolioDetailsModal({ kind, portfolios, onClose, onNavigate }: { kind: PortfolioKind | null; portfolios: DashboardData["portfolios"]; onClose: () => void; onNavigate: (page: AppPage) => void }) {
-  const weekly = portfolios.weekly;
-  const monthly = portfolios.monthlyInterest;
-  const isWeekly = kind === "weekly";
-  const details = isWeekly
-    ? [
-        ["Capital emprestado", money(weekly.capitalLent), "Valor principal dos contratos ativos"],
-        ["Total contratado", money(weekly.totalContracted), "Parcelas completas, já com juros"],
-        ["Falta receber", money(weekly.remainingReceivable), "Saldo das parcelas não pagas"],
-        ["Recebido", money(weekly.received), "Parcelas recebidas nos contratos ativos"],
-        ["Lucro contratado", money(weekly.contractedProfit), "Diferença entre contrato e capital"],
-        ["Em atraso", money(weekly.overdueAmount), `${weekly.overdueInstallments} parcelas vencidas, com multa`],
-        ["Percentual recebido", percentage(weekly.collectionRate), "Progresso dos contratos ativos"],
-        ["Contratos ativos", String(weekly.activeContracts), "Contratos parcelados em andamento"],
-      ]
-    : [
-        ["Capital emprestado", money(monthly.capitalLent), "Valor principal dos contratos ativos"],
-        ["Capital em circulação", money(monthly.capitalInCirculation), "Principal ainda em poder dos clientes"],
-        ["Juros previstos no mês", money(monthly.interestDueThisMonth), "Cobranças com vencimento neste mês"],
-        ["Juros recebidos no mês", money(monthly.interestReceivedThisMonth), "Entradas de juros confirmadas no mês"],
-        ["Falta receber no mês", money(monthly.interestRemainingThisMonth), "Saldo das cobranças deste mês"],
-        ["Juros anteriores atrasados", money(monthly.previousInterestOverdue), "Pendências vencidas antes deste mês"],
-        ["Capital devolvido no mês", money(monthly.principalReturnedThisMonth), "Amortizações e quitações recebidas"],
-        ["Rentabilidade mensal", percentage(monthly.monthlyYieldRate), "Juros recebidos sobre o capital em circulação"],
-      ];
-
-  return (
-    <Modal open={Boolean(kind)} onClose={onClose} title={isWeekly ? "Empréstimos parcelados" : "Juros mensal"} description={isWeekly ? "Valores exclusivos dos contratos parcelados ativos." : "Valores exclusivos da carteira de juros mensal."} size="lg">
-      <div className="grid grid-cols-1 gap-2.5 min-[481px]:grid-cols-2">
-        {details.map(([label, value, caption], index) => (
-          <div className={`min-w-0 rounded-xl border p-4 ${index < 4 ? "border-violet-200 bg-violet-50/70" : "border-slate-200 bg-white"}`} key={label}>
-            <span className="text-xs font-medium text-slate-500">{label}</span>
-            <strong className="mt-1.5 block overflow-hidden text-xl tracking-[-0.4px] text-slate-900 text-ellipsis whitespace-nowrap">{value}</strong>
-            <small className="mt-1 block text-[11px] leading-5 text-slate-500">{caption}</small>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
-        <p className="m-0 text-xs leading-5 text-slate-600">{isWeekly ? "Os juros de atraso ficam separados dos juros contratados nas parcelas." : "Como não há data final, juros futuros ainda não gerados não entram nos totais."}</p>
-        <Button className="shrink-0" variant="secondary" onClick={() => { onClose(); onNavigate("loans"); }}>Ver empréstimos <ArrowRight size={15} /></Button>
-      </div>
-    </Modal>
-  );
-}
-
 export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKey: number; onNavigate: (page: AppPage) => void; onNewLoan: () => void }) {
   const { data, error, reload } = useDashboard(refreshKey);
-  const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioKind | null>(null);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioKind>("weekly");
 
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? "Bom dia" : currentHour < 18 ? "Boa tarde" : "Boa noite";
@@ -76,7 +30,33 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
   const m = data.metrics;
   const weekly = data.portfolios.weekly;
   const monthly = data.portfolios.monthlyInterest;
-  const portfolioValueClass = "mt-1 block overflow-hidden text-[clamp(16px,5vw,23px)] font-extrabold tracking-[-0.6px] text-ellipsis whitespace-nowrap";
+  const isWeekly = selectedPortfolio === "weekly";
+  const mainPortfolioMetrics = isWeekly
+    ? [
+        ["Capital emprestado", money(weekly.capitalLent), "principal dos contratos ativos"],
+        ["Total com juros", money(weekly.totalContracted), "valor total contratado"],
+        ["Já recebido", money(weekly.received), "parcelas confirmadas"],
+        ["Falta receber", money(weekly.remainingReceivable), "parcelas ainda em aberto"],
+      ]
+    : [
+        ["Capital emprestado", money(monthly.capitalLent), "principal dos contratos ativos"],
+        ["Juros do mês", money(monthly.interestDueThisMonth), "previstos para este mês"],
+        ["Juros recebidos", money(monthly.interestReceivedThisMonth), "confirmados neste mês"],
+        ["Falta receber", money(monthly.interestRemainingThisMonth), "juros pendentes do mês"],
+      ];
+  const secondaryPortfolioMetrics = isWeekly
+    ? [
+        ["Lucro contratado", money(weekly.contractedProfit)],
+        ["Em atraso", money(weekly.overdueAmount)],
+        ["Recebido", percentage(weekly.collectionRate)],
+        ["Contratos", String(weekly.activeContracts)],
+      ]
+    : [
+        ["Capital em circulação", money(monthly.capitalInCirculation)],
+        ["Atrasos anteriores", money(monthly.previousInterestOverdue)],
+        ["Capital devolvido", money(monthly.principalReturnedThisMonth)],
+        ["Rentabilidade", percentage(monthly.monthlyYieldRate)],
+      ];
 
   return (
     <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
@@ -87,28 +67,34 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         action={<Button onClick={onNewLoan}><Plus size={18} /> Novo empréstimo</Button>}
       />
 
-      <div className="grid grid-cols-1 gap-3 min-[861px]:grid-cols-2 min-[1121px]:gap-4">
-        <button type="button" onClick={() => setSelectedPortfolio("weekly")} className="group min-w-0 rounded-2xl border border-transparent bg-gradient-to-br from-[#7350e5] to-[#5b37c7] p-4 text-left text-white shadow-[0_12px_30px_rgba(101,63,209,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_15px_35px_rgba(101,63,209,0.27)] min-[641px]:p-5">
-          <div className="flex items-center justify-between gap-3"><span className="grid size-10 place-items-center rounded-xl bg-white/15"><HandCoins size={22} /></span><span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold">{weekly.activeContracts} ativos</span></div>
-          <div className="mt-3 flex items-end justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-white/65">Carteira</span><h2 className="mt-1 text-lg font-bold">Empréstimos parcelados</h2></div><span className="flex items-center gap-1 text-[11px] font-bold text-white/80 max-[380px]:hidden">Ver detalhes <ArrowRight className="transition group-hover:translate-x-0.5" size={15} /></span></div>
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Capital emprestado</span><strong className={portfolioValueClass}>{money(weekly.capitalLent)}</strong></div>
-            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Total com juros</span><strong className={portfolioValueClass}>{money(weekly.totalContracted)}</strong></div>
-            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Já recebido</span><strong className={portfolioValueClass}>{money(weekly.received)}</strong></div>
-            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Falta receber</span><strong className={portfolioValueClass}>{money(weekly.remainingReceivable)}</strong></div>
-          </div>
-        </button>
+      <div className="rounded-2xl border border-[#e6e2ec] bg-white p-2 shadow-[0_7px_25px_rgba(47,38,73,0.06)]">
+        <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[#f5f3f8] p-1" role="tablist" aria-label="Modalidade da carteira">
+          <button type="button" role="tab" aria-selected={isWeekly} onClick={() => setSelectedPortfolio("weekly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs ${isWeekly ? "bg-white text-violet-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><HandCoins className="shrink-0" size={17} /><span className="truncate">Parcelados</span></button>
+          <button type="button" role="tab" aria-selected={!isWeekly} onClick={() => setSelectedPortfolio("monthly")} className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-[11px] font-bold transition min-[421px]:text-xs ${!isWeekly ? "bg-white text-emerald-700 shadow-[0_3px_10px_rgba(57,42,89,0.1)]" : "text-slate-500 hover:text-slate-700"}`}><CircleDollarSign className="shrink-0" size={17} /><span className="truncate">Juros mensal</span></button>
+        </div>
 
-        <button type="button" onClick={() => setSelectedPortfolio("monthly")} className="group min-w-0 rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/80 p-4 text-left text-slate-900 shadow-[0_8px_25px_rgba(38,110,82,0.08)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_13px_32px_rgba(38,110,82,0.13)] min-[641px]:p-5">
-          <div className="flex items-center justify-between gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700"><CircleDollarSign size={22} /></span><span className="rounded-full bg-emerald-100 px-3 py-1.5 text-[10px] font-bold text-emerald-700">{monthly.activeContracts} ativos</span></div>
-          <div className="mt-3 flex items-end justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-emerald-600">Carteira</span><h2 className="mt-1 text-lg font-bold">Juros mensal</h2></div><span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 max-[380px]:hidden">Ver detalhes <ArrowRight className="transition group-hover:translate-x-0.5" size={15} /></span></div>
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Capital emprestado</span><strong className={portfolioValueClass}>{money(monthly.capitalLent)}</strong></div>
-            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Juros do mês</span><strong className={portfolioValueClass}>{money(monthly.interestDueThisMonth)}</strong></div>
-            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Juros recebidos</span><strong className={`${portfolioValueClass} text-emerald-700`}>{money(monthly.interestReceivedThisMonth)}</strong></div>
-            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Falta receber no mês</span><strong className={portfolioValueClass}>{money(monthly.interestRemainingThisMonth)}</strong></div>
+        <section className={`mt-2 overflow-hidden rounded-xl border p-3.5 min-[641px]:p-4 ${isWeekly ? "border-violet-100 bg-gradient-to-br from-[#fbfaff] to-[#f4f0ff]" : "border-emerald-100 bg-gradient-to-br from-white to-emerald-50/80"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5"><span className={`grid size-9 shrink-0 place-items-center rounded-[10px] ${isWeekly ? "bg-violet-100 text-violet-700" : "bg-emerald-100 text-emerald-700"}`}>{isWeekly ? <HandCoins size={20} /> : <CircleDollarSign size={20} />}</span><div className="min-w-0"><span className={`text-[9px] font-extrabold uppercase tracking-[1.2px] ${isWeekly ? "text-violet-600" : "text-emerald-600"}`}>Carteira selecionada</span><h2 className="mt-0.5 truncate text-[15px] font-bold text-slate-900 min-[421px]:text-base">{isWeekly ? "Empréstimos parcelados" : "Juros mensal"}</h2></div></div>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${isWeekly ? "bg-violet-100 text-violet-700" : "bg-emerald-100 text-emerald-700"}`}>{isWeekly ? weekly.activeContracts : monthly.activeContracts} ativos</span>
           </div>
-        </button>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4 min-[641px]:gap-2.5">
+            {mainPortfolioMetrics.map(([label, value, caption], index) => (
+              <div className="min-w-0 rounded-xl border border-white bg-white/90 p-3 shadow-[0_2px_8px_rgba(45,37,67,0.04)]" key={label}>
+                <span className="block truncate text-[10px] text-slate-500 min-[421px]:text-[10.5px]">{label}</span>
+                <strong className={`mt-1 block overflow-hidden text-[clamp(14px,4.4vw,21px)] font-extrabold tracking-[-0.5px] text-ellipsis whitespace-nowrap ${!isWeekly && index === 2 ? "text-emerald-700" : "text-slate-900"}`}>{value}</strong>
+                <small className="mt-1 hidden text-[9.5px] leading-4 text-slate-400 min-[641px]:block">{caption}</small>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 grid grid-cols-2 gap-2 min-[641px]:grid-cols-4">
+            {secondaryPortfolioMetrics.map(([label, value]) => <div className="min-w-0 rounded-lg border border-slate-200/80 bg-white/55 px-2.5 py-2" key={label}><span className="block truncate text-[9.5px] text-slate-500">{label}</span><strong className="mt-0.5 block overflow-hidden text-xs text-slate-800 text-ellipsis whitespace-nowrap">{value}</strong></div>)}
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-slate-200/70 pt-2.5"><p className="m-0 hidden text-[10.5px] leading-5 text-slate-500 min-[641px]:block">{isWeekly ? "Juros de atraso ficam separados dos juros contratados." : "Juros futuros ainda não gerados não entram nos totais."}</p><button className={`ml-auto inline-flex items-center gap-1 border-0 bg-transparent p-0 text-[11px] font-bold ${isWeekly ? "text-violet-700" : "text-emerald-700"}`} onClick={() => onNavigate("loans")}>Ver empréstimos <ArrowRight size={14} /></button></div>
+        </section>
       </div>
 
       <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:min-h-0 min-[861px]:flex-1 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-4">
@@ -143,7 +129,6 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
           </section>
         </aside>
       </div>
-      <PortfolioDetailsModal kind={selectedPortfolio} portfolios={data.portfolios} onClose={() => setSelectedPortfolio(null)} onNavigate={onNavigate} />
     </div>
   );
 }
