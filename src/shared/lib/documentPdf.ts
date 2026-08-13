@@ -63,34 +63,32 @@ function fit(pdf: Pdf, value: string, maxWidth: number, size: number, min = 5.5)
 
 function header(pdf: Pdf, title: string, subtitle: string, rightTop: string, rightBottom: string) {
   const width = pdf.internal.pageSize.getWidth();
+  fill(pdf, C.purpleDark);
+  pdf.roundedRect(13, 12.5, 13, 13, 3, 3, "F");
   fill(pdf, C.purple);
-  pdf.roundedRect(12, 11, 15, 15, 3, 3, "F");
+  pdf.roundedRect(12, 11.5, 13, 13, 3, 3, "F");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(12);
+  pdf.setFontSize(11.5);
   pdf.setTextColor(255, 255, 255);
-  pdf.text("M", 19.5, 21.2, { align: "center" });
+  pdf.text("M", 18.5, 20.6, { align: "center" });
   textColor(pdf, C.text);
-  pdf.setFontSize(13);
-  pdf.text("MFlow", 31, 17.5);
-  pdf.setFont("helvetica", "normal");
-  textColor(pdf, C.muted);
-  pdf.setFontSize(6.5);
-  pdf.text("GESTÃO FINANCEIRA", 31, 22.3);
+  pdf.setFontSize(15.5);
+  pdf.text("MFlow", 29, 20.4);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  pdf.setFontSize(17);
+  pdf.setFontSize(19);
   pdf.text(title, 12, 35);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.text(subtitle, 12, 40.5);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  pdf.setFontSize(7.5);
+  pdf.setFontSize(8.5);
   pdf.text(rightTop, width - 12, 17, { align: "right" });
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(7);
+  pdf.setFontSize(8);
   pdf.text(rightBottom, width - 12, 22, { align: "right" });
   drawColor(pdf, C.purple);
   pdf.setLineWidth(0.65);
@@ -101,7 +99,7 @@ function section(pdf: Pdf, title: string, y: number) {
   const width = pdf.internal.pageSize.getWidth();
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.purple);
-  pdf.setFontSize(7.2);
+  pdf.setFontSize(8.5);
   pdf.text(title.toUpperCase(), 12, y);
   drawColor(pdf, C.border);
   pdf.setLineWidth(0.25);
@@ -109,15 +107,15 @@ function section(pdf: Pdf, title: string, y: number) {
 }
 
 function field(pdf: Pdf, x: number, y: number, width: number, label: string, value: string) {
-  card(pdf, x, y, width, 18, C.soft);
+  card(pdf, x, y, width, 20, C.soft);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(6.3);
-  pdf.text(label, x + 4, y + 6);
+  pdf.setFontSize(7.4);
+  pdf.text(label, x + 4, y + 6.7);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, value, width - 8, 9.2);
-  pdf.text(value, x + 4, y + 13.1);
+  fit(pdf, value, width - 8, 10.5, 7);
+  pdf.text(value, x + 4, y + 14.5);
 }
 
 function footer(pdf: Pdf) {
@@ -131,8 +129,7 @@ function footer(pdf: Pdf) {
     pdf.line(12, height - 11, width - 12, height - 11);
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
-    pdf.setFontSize(6.5);
-    pdf.text("MFlow - Gestão financeira", 12, height - 6.5);
+    pdf.setFontSize(7.5);
     pdf.text(`Página ${page} de ${pages}`, width - 12, height - 6.5, { align: "right" });
   }
 }
@@ -165,27 +162,27 @@ function chargeRow(pdf: Pdf, loan: Loan, charge: Charge, x: number, y: number, w
   const { values, details } = chargeInfo(loan, charge);
   const color = charge.status === "PAID" ? C.green : charge.status === "OVERDUE" ? C.red : charge.status === "PARTIAL" ? C.purple : C.amber;
   const soft = charge.status === "PAID" ? C.greenSoft : charge.status === "OVERDUE" ? C.redSoft : charge.status === "PARTIAL" ? C.purpleSoft : C.amberSoft;
-  card(pdf, x, y, width, 18);
+  card(pdf, x, y, width, 20);
   fill(pdf, soft);
-  pdf.roundedRect(x + 3, y + 3, 18, 12, 2, 2, "F");
+  pdf.roundedRect(x + 3, y + 3, 18, 14, 2, 2, "F");
   pdf.setFont("helvetica", "bold");
   textColor(pdf, color);
-  pdf.setFontSize(6.7);
-  pdf.text(charge.number ? `#${charge.number}` : charge.referenceMonth || "Juros", x + 12, y + 10.1, { align: "center" });
+  pdf.setFontSize(7.5);
+  pdf.text(charge.number ? `#${charge.number}` : charge.referenceMonth || "Juros", x + 12, y + 11.1, { align: "center" });
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  pdf.setFontSize(7.2);
-  pdf.text(charge.number ? `Parcela ${charge.number}` : `Juros ${charge.referenceMonth}`, x + 24, y + 6.1);
+  pdf.setFontSize(8.4);
+  pdf.text(charge.number ? `Parcela ${charge.number}` : `Juros ${charge.referenceMonth}`, x + 24, y + 6.8);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(6.1);
-  pdf.text(date(charge.dueDate), x + 24, y + 10.8);
-  fit(pdf, details, width - 54, 5.5, 4.7);
-  pdf.text(details, x + 24, y + 15);
+  pdf.setFontSize(7);
+  pdf.text(date(charge.dueDate), x + 24, y + 12);
+  fit(pdf, details, width - 54, 6.4, 5.3);
+  pdf.text(details, x + 24, y + 17);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, color);
-  fit(pdf, money(values.updatedAmount), 28, 8.2);
-  pdf.text(money(values.updatedAmount), x + width - 4, y + 10.3, { align: "right" });
+  fit(pdf, money(values.updatedAmount), 28, 9.4, 7);
+  pdf.text(money(values.updatedAmount), x + width - 4, y + 11.3, { align: "right" });
 }
 
 export async function createLoanDocumentPdf(loan: Loan) {
@@ -200,16 +197,16 @@ export async function createLoanDocumentPdf(loan: Loan) {
   card(pdf, 12, 58, usable, 31);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, loan.customer.name, 176, 13);
-  pdf.text(loan.customer.name, 17, 67);
+  fit(pdf, loan.customer.name, 176, 14.5, 10);
+  pdf.text(loan.customer.name, 17, 68);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(7.2);
-  pdf.text(`Telefone: ${loan.customer.phone}`, 17, 75);
-  pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 75);
+  pdf.setFontSize(8.5);
+  pdf.text(`Telefone: ${loan.customer.phone}`, 17, 76.5);
+  pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 76.5);
   const address = `Endereço: ${loan.customer.address || "Não informado"}`;
-  fit(pdf, address, 176, 7.2, 6);
-  pdf.text(address, 17, 82.5);
+  fit(pdf, address, 176, 8.2, 6.8);
+  pdf.text(address, 17, 84);
 
   section(pdf, "Resumo financeiro", 98);
   const summary: Array<[string, string, Color]> = [
@@ -224,12 +221,12 @@ export async function createLoanDocumentPdf(loan: Loan) {
     card(pdf, x, 103, summaryWidth, 23, tone, tone);
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
-    pdf.setFontSize(5.8);
-    pdf.text(label, x + 3, 109.4);
+    fit(pdf, label, summaryWidth - 6, 7, 5.8);
+    pdf.text(label, x + 3, 110);
     pdf.setFont("helvetica", "bold");
     textColor(pdf, C.text);
-    fit(pdf, value, summaryWidth - 6, 9.3);
-    pdf.text(value, x + 3, 119.2);
+    fit(pdf, value, summaryWidth - 6, 10.8, 7.5);
+    pdf.text(value, x + 3, 120.2);
   });
 
   section(pdf, "Condições do contrato", 136);
@@ -256,13 +253,13 @@ export async function createLoanDocumentPdf(loan: Loan) {
   });
 
   let index = 0;
-  let agendaY = 190;
+  let agendaY = 194;
   let firstPage = true;
   while (index < charges.length || (firstPage && charges.length === 0)) {
     if (!firstPage) {
       pdf.addPage();
       header(pdf, "Agenda de cobranças", loan.customer.name, `Contrato ${loan.id}`, "Continuação");
-      agendaY = 54;
+      agendaY = 56;
     }
     section(pdf, firstPage ? `Agenda de cobranças - ${charges.length} itens` : "Agenda de cobranças - continuação", agendaY - 5);
     if (!charges.length) {
@@ -272,7 +269,7 @@ export async function createLoanDocumentPdf(loan: Loan) {
       pdf.text("Nenhuma cobrança registrada.", 12, agendaY + 6);
       break;
     }
-    const rowHeight = 21;
+    const rowHeight = 23;
     const rows = Math.max(1, Math.floor((276 - agendaY) / rowHeight));
     const pageCharges = charges.slice(index, index + rows * 2);
     const firstColumn = Math.ceil(pageCharges.length / 2);
@@ -290,23 +287,23 @@ export async function createLoanDocumentPdf(loan: Loan) {
 }
 
 function metricCard(pdf: Pdf, x: number, y: number, width: number, label: string, value: string, caption: string, color: Color, soft: Color) {
-  card(pdf, x, y, width, 31);
+  card(pdf, x, y, width, 34);
   fill(pdf, soft);
   pdf.roundedRect(x + 4, y + 4, 8, 8, 2, 2, "F");
   fill(pdf, color);
   pdf.circle(x + 8, y + 8, 1.5, "F");
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(6.5);
-  pdf.text(label, x + 4, y + 17);
+  pdf.setFontSize(7.6);
+  pdf.text(label, x + 4, y + 18);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, value, width - 8, 11.5);
-  pdf.text(value, x + 4, y + 24);
+  fit(pdf, value, width - 8, 13.2, 8.5);
+  pdf.text(value, x + 4, y + 26);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
-  pdf.setFontSize(5.5);
-  pdf.text(caption, x + 4, y + 28.5);
+  pdf.setFontSize(6.4);
+  pdf.text(caption, x + 4, y + 31.5);
 }
 
 export async function createReportsDocumentPdf(data: ReportData, from: string, to: string) {
@@ -326,16 +323,16 @@ export async function createReportsDocumentPdf(data: ReportData, from: string, t
   metrics.forEach(([label, value, caption, color, soft], index) => metricCard(pdf, 12 + index * (metricWidth + gap), 53, metricWidth, label, value, caption, color, soft));
 
   const chartX = 12;
-  const chartY = 91;
+  const chartY = 94;
   const chartWidth = 178;
   const panelHeight = 94;
   card(pdf, chartX, chartY, chartWidth, panelHeight);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.purple);
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.5);
   pdf.text("COMPARATIVO FINANCEIRO", chartX + 7, chartY + 9);
   textColor(pdf, C.text);
-  pdf.setFontSize(10.5);
+  pdf.setFontSize(12);
   pdf.text("Composição da carteira", chartX + 7, chartY + 17);
   const items: Array<[string, number, Color]> = [
     ["Emprestado", data.metrics.totalLent, C.purple],
@@ -356,11 +353,11 @@ export async function createReportsDocumentPdf(data: ReportData, from: string, t
     pdf.roundedRect(center - 7, plotBottom - height, 14, height, 1.5, 1.5, "F");
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
-    fit(pdf, money(value), 31, 6.4, 5.3);
+    fit(pdf, money(value), 31, 7.3, 6.1);
     pdf.text(money(value), center, plotBottom - height - 2.5, { align: "center" });
     pdf.setFont("helvetica", "bold");
     textColor(pdf, C.text);
-    pdf.setFontSize(6.2);
+    pdf.setFontSize(7.2);
     pdf.text(label, center, plotBottom + 6.5, { align: "center" });
   });
 
@@ -369,23 +366,23 @@ export async function createReportsDocumentPdf(data: ReportData, from: string, t
   card(pdf, profitX, chartY, profitWidth, panelHeight);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.purple);
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.5);
   pdf.text("RENTABILIDADE", profitX + 7, chartY + 9);
   textColor(pdf, C.text);
-  pdf.setFontSize(10.5);
+  pdf.setFontSize(12);
   pdf.text("Resultado da operação", profitX + 7, chartY + 17);
   fill(pdf, C.purple);
   pdf.roundedRect(profitX + 7, chartY + 23, profitWidth - 14, 28, 2.5, 2.5, "F");
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(225, 215, 255);
-  pdf.setFontSize(6.5);
+  pdf.setFontSize(7.5);
   pdf.text("Lucro realizado", profitX + 12, chartY + 31);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(255, 255, 255);
-  fit(pdf, money(data.metrics.realizedProfit), profitWidth - 24, 14);
+  fit(pdf, money(data.metrics.realizedProfit), profitWidth - 24, 16, 10);
   pdf.text(money(data.metrics.realizedProfit), profitX + 12, chartY + 42);
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(5.5);
+  pdf.setFontSize(6.3);
   pdf.text("Recebimentos menos capital recuperado", profitX + 12, chartY + 47);
   const rows: Array<[string, string]> = [
     ["Juros recebidos", money(data.metrics.interestReceived)],
@@ -398,11 +395,11 @@ export async function createReportsDocumentPdf(data: ReportData, from: string, t
     pdf.line(profitX + 7, y - 4, profitX + profitWidth - 7, y - 4);
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
-    pdf.setFontSize(7);
+    pdf.setFontSize(8);
     pdf.text(label, profitX + 8, y + 1);
     pdf.setFont("helvetica", "bold");
     textColor(pdf, C.text);
-    fit(pdf, value, 32, 7.3, 6);
+    fit(pdf, value, 32, 8.5, 6.7);
     pdf.text(value, profitX + profitWidth - 8, y + 1, { align: "right" });
   });
   footer(pdf);
