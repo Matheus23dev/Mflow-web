@@ -1,23 +1,70 @@
 import {
-  ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
-  CalendarClock,
   CircleDollarSign,
   HandCoins,
   Plus,
   TrendingUp,
   UsersRound,
-  WalletCards,
 } from "lucide-react";
+import { useState } from "react";
 import { compactDate, money } from "@/shared/lib/format";
 import type { AppPage } from "@/shared/layout/AppShell";
-import { Avatar, Button, EmptyState, ErrorState, LoadingState, PageHeader, StatusBadge } from "@/shared/ui";
+import type { DashboardData } from "@/shared/types";
+import { Avatar, Button, EmptyState, ErrorState, LoadingState, Modal, PageHeader, StatusBadge } from "@/shared/ui";
 import { useDashboard } from "../hooks/useDashboard";
-import { DashboardMetricCard } from "../components/DashboardMetricCard";
+
+type PortfolioKind = "weekly" | "monthly";
+
+const percentage = (value: number) => `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value)}%`;
+
+function PortfolioDetailsModal({ kind, portfolios, onClose, onNavigate }: { kind: PortfolioKind | null; portfolios: DashboardData["portfolios"]; onClose: () => void; onNavigate: (page: AppPage) => void }) {
+  const weekly = portfolios.weekly;
+  const monthly = portfolios.monthlyInterest;
+  const isWeekly = kind === "weekly";
+  const details = isWeekly
+    ? [
+        ["Capital emprestado", money(weekly.capitalLent), "Valor principal dos contratos ativos"],
+        ["Total contratado", money(weekly.totalContracted), "Parcelas completas, já com juros"],
+        ["Falta receber", money(weekly.remainingReceivable), "Saldo das parcelas não pagas"],
+        ["Recebido", money(weekly.received), "Parcelas recebidas nos contratos ativos"],
+        ["Lucro contratado", money(weekly.contractedProfit), "Diferença entre contrato e capital"],
+        ["Em atraso", money(weekly.overdueAmount), `${weekly.overdueInstallments} parcelas vencidas, com multa`],
+        ["Percentual recebido", percentage(weekly.collectionRate), "Progresso dos contratos ativos"],
+        ["Contratos ativos", String(weekly.activeContracts), "Contratos parcelados em andamento"],
+      ]
+    : [
+        ["Capital emprestado", money(monthly.capitalLent), "Valor principal dos contratos ativos"],
+        ["Capital em circulação", money(monthly.capitalInCirculation), "Principal ainda em poder dos clientes"],
+        ["Juros previstos no mês", money(monthly.interestDueThisMonth), "Cobranças com vencimento neste mês"],
+        ["Juros recebidos no mês", money(monthly.interestReceivedThisMonth), "Entradas de juros confirmadas no mês"],
+        ["Falta receber no mês", money(monthly.interestRemainingThisMonth), "Saldo das cobranças deste mês"],
+        ["Juros anteriores atrasados", money(monthly.previousInterestOverdue), "Pendências vencidas antes deste mês"],
+        ["Capital devolvido no mês", money(monthly.principalReturnedThisMonth), "Amortizações e quitações recebidas"],
+        ["Rentabilidade mensal", percentage(monthly.monthlyYieldRate), "Juros recebidos sobre o capital em circulação"],
+      ];
+
+  return (
+    <Modal open={Boolean(kind)} onClose={onClose} title={isWeekly ? "Empréstimos parcelados" : "Juros mensal"} description={isWeekly ? "Valores exclusivos dos contratos parcelados ativos." : "Valores exclusivos da carteira de juros mensal."} size="lg">
+      <div className="grid grid-cols-1 gap-2.5 min-[481px]:grid-cols-2">
+        {details.map(([label, value, caption], index) => (
+          <div className={`min-w-0 rounded-xl border p-4 ${index < 4 ? "border-violet-200 bg-violet-50/70" : "border-slate-200 bg-white"}`} key={label}>
+            <span className="text-xs font-medium text-slate-500">{label}</span>
+            <strong className="mt-1.5 block overflow-hidden text-xl tracking-[-0.4px] text-slate-900 text-ellipsis whitespace-nowrap">{value}</strong>
+            <small className="mt-1 block text-[11px] leading-5 text-slate-500">{caption}</small>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 min-[481px]:flex-row min-[481px]:items-center min-[481px]:justify-between">
+        <p className="m-0 text-xs leading-5 text-slate-600">{isWeekly ? "Os juros de atraso ficam separados dos juros contratados nas parcelas." : "Como não há data final, juros futuros ainda não gerados não entram nos totais."}</p>
+        <Button className="shrink-0" variant="secondary" onClick={() => { onClose(); onNavigate("loans"); }}>Ver empréstimos <ArrowRight size={15} /></Button>
+      </div>
+    </Modal>
+  );
+}
 
 export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKey: number; onNavigate: (page: AppPage) => void; onNewLoan: () => void }) {
   const { data, error, reload } = useDashboard(refreshKey);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioKind | null>(null);
 
   const currentHour = new Date().getHours();
   const greeting = currentHour < 12 ? "Bom dia" : currentHour < 18 ? "Boa tarde" : "Boa noite";
@@ -27,46 +74,41 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
   if (!data) return null;
 
   const m = data.metrics;
-  const portfolioTotal = m.totalReceived + m.openBalance;
-  const collectionRate = portfolioTotal > 0 ? Math.min(100, (m.totalReceived / portfolioTotal) * 100) : 0;
-  const metricTopClass = "metric-top flex items-center justify-between gap-[7px]";
-  const metricIconClass = "metric-icon grid size-[35px] place-items-center rounded-[10px]";
-  const metricTrendClass = "metric-trend inline-flex items-center gap-[3px] whitespace-nowrap rounded-full px-[7px] py-1 text-[8.5px] font-bold max-[640px]:hidden";
-  const metricLabelClass = "mb-[5px] mt-2 text-xs text-[#858090] min-[641px]:mt-4";
-  const metricValueClass = "block overflow-hidden text-[clamp(15px,4.5vw,19px)] tracking-[-0.65px] text-ellipsis whitespace-nowrap min-[641px]:text-[clamp(21px,1.9vw,27px)]";
-  const metricFootClass = "metric-foot mt-[11px] flex min-h-[18px] items-center justify-between gap-1.5 border-t border-[#f0eef3] pt-2.5 text-[11px] text-[#9995a1]";
-  const metricLinkClass = "flex items-center gap-[3px] border-0 bg-transparent p-0 text-[11px] font-bold text-violet-600 max-[640px]:hidden";
+  const weekly = data.portfolios.weekly;
+  const monthly = data.portfolios.monthlyInterest;
+  const portfolioValueClass = "mt-1 block overflow-hidden text-[clamp(16px,5vw,23px)] font-extrabold tracking-[-0.6px] text-ellipsis whitespace-nowrap";
 
   return (
     <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
       <PageHeader
         eyebrow={`${greeting} · ${new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date())}`}
         title="Visão geral da operação"
-        description="Acompanhe o que está acontecendo com seu dinheiro hoje."
+        description="Acompanhe cada modalidade separadamente, sem misturar os valores."
         action={<Button onClick={onNewLoan}><Plus size={18} /> Novo empréstimo</Button>}
       />
 
-      <div className="metric-grid metric-grid-main grid grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:gap-3 min-[1121px]:grid-cols-4 min-[1121px]:gap-[15px]">
-        <DashboardMetricCard featured>
-          <div className={metricTopClass}><span className={`${metricIconClass} bg-violet-50 text-violet-600`}><HandCoins size={20} /></span><span className={`${metricTrendClass} positive bg-emerald-50 text-emerald-700`}><ArrowUpRight size={14} /> Capital ativo</span></div>
-          <p className={metricLabelClass}>Capital emprestado</p><strong className={metricValueClass}>{money(m.capitalLent)}</strong>
-          <div className={metricFootClass}><span>{m.activeLoans} contratos ativos</span><button className={metricLinkClass} onClick={() => onNavigate("loans")}>Detalhes <ArrowRight size={14} /></button></div>
-        </DashboardMetricCard>
-        <DashboardMetricCard>
-          <div className={metricTopClass}><span className={`${metricIconClass} green bg-emerald-50 text-emerald-600`}><CircleDollarSign size={20} /></span><span className={`${metricTrendClass} positive bg-emerald-50 text-emerald-700`}><ArrowUpRight size={14} /> Este mês</span></div>
-          <p className={metricLabelClass}>Recebido no mês</p><strong className={metricValueClass}>{money(m.receivedThisMonth)}</strong>
-          <div className={metricFootClass}><span>{money(m.totalReceived)} no total</span></div>
-        </DashboardMetricCard>
-        <DashboardMetricCard>
-          <div className={metricTopClass}><span className={`${metricIconClass} amber bg-amber-50 text-amber-600`}><WalletCards size={20} /></span><span className={`${metricTrendClass} neutral bg-amber-50 text-amber-700`}><CalendarClock size={14} /> A receber</span></div>
-          <p className={metricLabelClass}>Saldo em aberto</p><strong className={metricValueClass}>{money(m.openBalance)}</strong>
-          <div className={metricFootClass}><span>{m.activeCustomers} clientes ativos</span></div>
-        </DashboardMetricCard>
-        <DashboardMetricCard>
-          <div className={metricTopClass}><span className={`${metricIconClass} red bg-rose-50 text-rose-500`}><TrendingUp size={20} /></span><span className={`${metricTrendClass} negative bg-rose-50 text-rose-700`}><ArrowDownRight size={14} /> Atenção</span></div>
-          <p className={metricLabelClass}>Valor em atraso</p><strong className={metricValueClass}>{money(m.overdueAmount)}</strong>
-          <div className={metricFootClass}><span>{m.overdueLoans} contratos em atraso</span><button className={metricLinkClass} onClick={() => onNavigate("collections")}>Cobrar <ArrowRight size={14} /></button></div>
-        </DashboardMetricCard>
+      <div className="grid grid-cols-1 gap-3 min-[861px]:grid-cols-2 min-[1121px]:gap-4">
+        <button type="button" onClick={() => setSelectedPortfolio("weekly")} className="group min-w-0 rounded-2xl border border-transparent bg-gradient-to-br from-[#7350e5] to-[#5b37c7] p-4 text-left text-white shadow-[0_12px_30px_rgba(101,63,209,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_15px_35px_rgba(101,63,209,0.27)] min-[641px]:p-5">
+          <div className="flex items-center justify-between gap-3"><span className="grid size-10 place-items-center rounded-xl bg-white/15"><HandCoins size={22} /></span><span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold">{weekly.activeContracts} ativos</span></div>
+          <div className="mt-3 flex items-end justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-white/65">Carteira</span><h2 className="mt-1 text-lg font-bold">Empréstimos parcelados</h2></div><span className="flex items-center gap-1 text-[11px] font-bold text-white/80 max-[380px]:hidden">Ver detalhes <ArrowRight className="transition group-hover:translate-x-0.5" size={15} /></span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Capital emprestado</span><strong className={portfolioValueClass}>{money(weekly.capitalLent)}</strong></div>
+            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Total com juros</span><strong className={portfolioValueClass}>{money(weekly.totalContracted)}</strong></div>
+            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Já recebido</span><strong className={portfolioValueClass}>{money(weekly.received)}</strong></div>
+            <div className="min-w-0 rounded-xl bg-white/10 p-3"><span className="text-[10.5px] text-white/65">Falta receber</span><strong className={portfolioValueClass}>{money(weekly.remainingReceivable)}</strong></div>
+          </div>
+        </button>
+
+        <button type="button" onClick={() => setSelectedPortfolio("monthly")} className="group min-w-0 rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/80 p-4 text-left text-slate-900 shadow-[0_8px_25px_rgba(38,110,82,0.08)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_13px_32px_rgba(38,110,82,0.13)] min-[641px]:p-5">
+          <div className="flex items-center justify-between gap-3"><span className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700"><CircleDollarSign size={22} /></span><span className="rounded-full bg-emerald-100 px-3 py-1.5 text-[10px] font-bold text-emerald-700">{monthly.activeContracts} ativos</span></div>
+          <div className="mt-3 flex items-end justify-between gap-3"><div><span className="text-[10px] font-extrabold uppercase tracking-[1.3px] text-emerald-600">Carteira</span><h2 className="mt-1 text-lg font-bold">Juros mensal</h2></div><span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 max-[380px]:hidden">Ver detalhes <ArrowRight className="transition group-hover:translate-x-0.5" size={15} /></span></div>
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Capital emprestado</span><strong className={portfolioValueClass}>{money(monthly.capitalLent)}</strong></div>
+            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Juros do mês</span><strong className={portfolioValueClass}>{money(monthly.interestDueThisMonth)}</strong></div>
+            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Juros recebidos</span><strong className={`${portfolioValueClass} text-emerald-700`}>{money(monthly.interestReceivedThisMonth)}</strong></div>
+            <div className="min-w-0 rounded-xl border border-emerald-100 bg-white/80 p-3"><span className="text-[10.5px] text-slate-500">Falta receber no mês</span><strong className={portfolioValueClass}>{money(monthly.interestRemainingThisMonth)}</strong></div>
+          </div>
+        </button>
       </div>
 
       <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:min-h-0 min-[861px]:flex-1 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-4">
@@ -88,19 +130,20 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         </section>
 
         <aside className="dashboard-aside flex min-w-0 flex-col gap-3 min-[641px]:gap-4 min-[861px]:min-h-0">
-          <section className="panel health-card flex-1 rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)]">
-            <div className="panel-header flex items-center justify-between gap-[15px] px-5 pb-[14px] pt-[19px]"><div><span className="eyebrow m-0 text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Saúde da carteira</span><h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39]">Desempenho</h2></div></div>
-            <div className="donut-wrap flex flex-col items-stretch gap-[14px] px-4 pb-4 pt-3 min-[641px]:flex-row min-[641px]:items-center min-[641px]:gap-5 min-[641px]:px-5 min-[641px]:pb-[22px] min-[641px]:pt-[7px]">
-              <div className="donut relative isolate mx-auto grid size-[108px] shrink-0 place-items-center overflow-hidden rounded-full before:absolute before:inset-[15px] before:rounded-full before:bg-white before:content-['']" style={{ background: `conic-gradient(#7450e9 ${collectionRate * 3.6}deg, #eeeaf5 0)` }}><div className="relative z-[1] flex flex-col items-center"><strong className="text-xl tracking-[-0.5px]">{collectionRate.toFixed(0)}%</strong><span className="text-[10.5px] text-[#9995a1]">recebido</span></div></div>
-              <div className="donut-legend grid min-w-0 flex-1 grid-cols-2 gap-2 min-[641px]:block"><p className="m-0 grid min-w-0 grid-cols-[7px_1fr] gap-x-[7px] gap-y-0.5 rounded-[10px] border border-[#eeeaf3] bg-[#faf9fc] px-2.5 py-2 min-[641px]:my-[11px] min-[641px]:border-0 min-[641px]:bg-transparent min-[641px]:p-0"><i className="dot dot-purple mt-0.5 size-1.5 rounded-full bg-violet-600" /><span className="text-[10.5px] text-[#8a8693]">Recebido</span><strong className="col-start-2 overflow-hidden text-[clamp(9.5px,3.2vw,11.5px)] text-ellipsis whitespace-nowrap min-[641px]:text-xs">{money(m.totalReceived)}</strong></p><p className="m-0 grid min-w-0 grid-cols-[7px_1fr] gap-x-[7px] gap-y-0.5 rounded-[10px] border border-[#eeeaf3] bg-[#faf9fc] px-2.5 py-2 min-[641px]:my-[11px] min-[641px]:border-0 min-[641px]:bg-transparent min-[641px]:p-0"><i className="dot dot-soft mt-0.5 size-1.5 rounded-full bg-[#d9d3e7]" /><span className="text-[10.5px] text-[#8a8693]">Em aberto</span><strong className="col-start-2 overflow-hidden text-[clamp(9.5px,3.2vw,11.5px)] text-ellipsis whitespace-nowrap min-[641px]:text-xs">{money(m.openBalance)}</strong></p></div>
+          <section className="panel flex-1 rounded-[14px] border border-[#e9e7ef] bg-white p-4 shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[641px]:p-5">
+            <span className="text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Resumo operacional</span>
+            <h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39]">Carteira ativa</h2>
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700"><UsersRound size={17} /></span><strong className="mt-2 block text-lg">{m.activeCustomers}</strong><small className="text-[10.5px] text-slate-500">clientes ativos</small></div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700"><HandCoins size={17} /></span><strong className="mt-2 block text-lg">{m.activeLoans}</strong><small className="text-[10.5px] text-slate-500">contratos ativos</small></div>
+              <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-rose-100 text-rose-600"><TrendingUp size={17} /></span><strong className="mt-2 block text-lg">{m.overdueLoans}</strong><small className="text-[10.5px] text-slate-500">contratos atrasados</small></div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700"><CircleDollarSign size={17} /></span><strong className="mt-2 block text-lg">{m.renewals}</strong><small className="text-[10.5px] text-slate-500">renovações</small></div>
             </div>
-          </section>
-          <section className="panel mini-stats grid grid-cols-2 rounded-[14px] border border-[#e9e7ef] bg-white p-[15px] shadow-[0_3px_14px_rgba(42,35,65,0.025)]">
-            <div className="flex items-center gap-[9px] px-2 py-[3px]"><span className="mini-icon grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-violet-50 text-violet-600"><UsersRound size={18} /></span><p className="m-0 flex min-w-0 flex-col"><strong className="text-sm">{m.activeCustomers}</strong><span className="mt-px text-[10px] text-[#9995a2]">clientes ativos</span></p></div>
-            <div className="flex items-center gap-[9px] border-l border-[#edeaf1] px-2 py-[3px]"><span className="mini-icon grid size-[30px] shrink-0 place-items-center rounded-[9px] bg-violet-50 text-violet-600"><TrendingUp size={18} /></span><p className="m-0 flex min-w-0 flex-col"><strong className="text-sm">{m.renewals}</strong><span className="mt-px text-[10px] text-[#9995a2]">renovações</span></p></div>
+            <Button className="mt-3 w-full" variant="secondary" onClick={() => onNavigate("collections")}>Ver cobranças <ArrowRight size={15} /></Button>
           </section>
         </aside>
       </div>
+      <PortfolioDetailsModal kind={selectedPortfolio} portfolios={data.portfolios} onClose={() => setSelectedPortfolio(null)} onNavigate={onNavigate} />
     </div>
   );
 }

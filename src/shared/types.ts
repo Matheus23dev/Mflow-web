@@ -166,6 +166,30 @@ export type DashboardData = {
     overdueLoans: number;
     renewals: number;
   };
+  portfolios: {
+    weekly: {
+      activeContracts: number;
+      capitalLent: number;
+      totalContracted: number;
+      received: number;
+      remainingReceivable: number;
+      contractedProfit: number;
+      overdueAmount: number;
+      overdueInstallments: number;
+      collectionRate: number;
+    };
+    monthlyInterest: {
+      activeContracts: number;
+      capitalLent: number;
+      capitalInCirculation: number;
+      interestDueThisMonth: number;
+      interestReceivedThisMonth: number;
+      interestRemainingThisMonth: number;
+      previousInterestOverdue: number;
+      principalReturnedThisMonth: number;
+      monthlyYieldRate: number;
+    };
+  };
   upcoming: CollectionItem[];
 };
 
