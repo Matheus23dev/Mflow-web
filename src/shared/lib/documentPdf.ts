@@ -95,6 +95,13 @@ function header(pdf: Pdf, title: string, subtitle: string, rightTop: string, rig
   pdf.line(12, 45, width - 12, 45);
 }
 
+function topRule(pdf: Pdf) {
+  const width = pdf.internal.pageSize.getWidth();
+  drawColor(pdf, C.purple);
+  pdf.setLineWidth(0.8);
+  pdf.line(12, 14, width - 12, 14);
+}
+
 function section(pdf: Pdf, title: string, y: number) {
   const width = pdf.internal.pageSize.getWidth();
   pdf.setFont("helvetica", "bold");
@@ -192,23 +199,36 @@ export async function createLoanDocumentPdf(loan: Loan) {
   const gap = 4;
   const charges = loan.type === "WEEKLY" ? loan.installments : loan.monthlyCharges;
 
-  header(pdf, "Relatório do empréstimo", loan.customer.name, `Contrato ${loan.id}`, `Início em ${date(loan.loanDate)}`);
-  section(pdf, "Dados do cliente", 53);
-  card(pdf, 12, 58, usable, 31);
+  topRule(pdf);
+  section(pdf, "Dados do cliente", 24);
+  card(pdf, 12, 29, usable, 32);
   pdf.setFont("helvetica", "bold");
   textColor(pdf, C.text);
-  fit(pdf, loan.customer.name, 176, 14.5, 10);
-  pdf.text(loan.customer.name, 17, 68);
+  fit(pdf, loan.customer.name, 116, 14.5, 10);
+  pdf.text(loan.customer.name, 17, 39);
+  fill(pdf, C.purpleSoft);
+  pdf.roundedRect(139, 33, 54, 12, 2, 2, "F");
+  pdf.setFont("helvetica", "normal");
+  textColor(pdf, C.purple);
+  pdf.setFontSize(6.6);
+  pdf.text("CONTRATO", 143, 37.5);
+  pdf.setFont("helvetica", "bold");
+  fit(pdf, loan.id, 46, 8.2, 6.5);
+  pdf.text(loan.id, 143, 42.5);
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
   pdf.setFontSize(8.5);
-  pdf.text(`Telefone: ${loan.customer.phone}`, 17, 76.5);
-  pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 76.5);
+  pdf.text(`Telefone: ${loan.customer.phone}`, 17, 49);
+  pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 49);
   const address = `Endereço: ${loan.customer.address || "Não informado"}`;
-  fit(pdf, address, 176, 8.2, 6.8);
-  pdf.text(address, 17, 84);
+  fit(pdf, address, 121, 8.2, 6.8);
+  pdf.text(address, 17, 56.5);
+  pdf.setFont("helvetica", "normal");
+  textColor(pdf, C.muted);
+  pdf.setFontSize(7.5);
+  pdf.text(`PDF gerado em: ${date(new Date())}`, 193, 56.5, { align: "right" });
 
-  section(pdf, "Resumo financeiro", 98);
+  section(pdf, "Resumo financeiro", 70);
   const summary: Array<[string, string, Color]> = [
     ["Situação atual", loanStatus[loan.status], C.purpleSoft],
     ["Valor atualizado a pagar", money(loan.summary.openBalance + loan.summary.lateFees), C.amberSoft],
@@ -218,18 +238,18 @@ export async function createLoanDocumentPdf(loan: Loan) {
   const summaryWidth = (usable - gap * 3) / 4;
   summary.forEach(([label, value, tone], index) => {
     const x = 12 + index * (summaryWidth + gap);
-    card(pdf, x, 103, summaryWidth, 23, tone, tone);
+    card(pdf, x, 75, summaryWidth, 23, tone, tone);
     pdf.setFont("helvetica", "normal");
     textColor(pdf, C.muted);
     fit(pdf, label, summaryWidth - 6, 7, 5.8);
-    pdf.text(label, x + 3, 110);
+    pdf.text(label, x + 3, 82);
     pdf.setFont("helvetica", "bold");
     textColor(pdf, C.text);
     fit(pdf, value, summaryWidth - 6, 10.8, 7.5);
-    pdf.text(value, x + 3, 120.2);
+    pdf.text(value, x + 3, 92.2);
   });
 
-  section(pdf, "Condições do contrato", 136);
+  section(pdf, "Condições do contrato", 108);
   const conditions: Array<[string, string]> = [
     ["Modalidade", loan.type === "WEEKLY" ? "Parcelado" : "Juros mensal"],
     ["Valor do empréstimo", money(loan.principalAmount)],
@@ -249,17 +269,17 @@ export async function createLoanDocumentPdf(loan: Loan) {
   ];
   const conditionWidth = (usable - gap * 2) / 3;
   conditions.slice(0, 6).forEach(([label, value], index) => {
-    field(pdf, 12 + (index % 3) * (conditionWidth + gap), 141 + Math.floor(index / 3) * 22, conditionWidth, label, value);
+    field(pdf, 12 + (index % 3) * (conditionWidth + gap), 113 + Math.floor(index / 3) * 23, conditionWidth, label, value);
   });
 
   let index = 0;
-  let agendaY = 194;
+  let agendaY = 173;
   let firstPage = true;
   while (index < charges.length || (firstPage && charges.length === 0)) {
     if (!firstPage) {
       pdf.addPage();
-      header(pdf, "Agenda de cobranças", loan.customer.name, `Contrato ${loan.id}`, "Continuação");
-      agendaY = 56;
+      topRule(pdf);
+      agendaY = 29;
     }
     section(pdf, firstPage ? `Agenda de cobranças - ${charges.length} itens` : "Agenda de cobranças - continuação", agendaY - 5);
     if (!charges.length) {
