@@ -14,6 +14,17 @@ const fieldSpanClass = "field-span min-[641px]:col-span-2";
 const formActionsClass = "form-actions -mx-[17px] -mb-[18px] mt-[3px] flex flex-col-reverse justify-end gap-2 border-t border-[#ebe8ee] bg-[#fbfafd] px-[17px] py-[13px] min-[421px]:flex-row min-[641px]:-mx-[22px] min-[641px]:-mb-[22px] min-[641px]:mt-1 min-[641px]:px-[22px] min-[641px]:py-[14px] max-[420px]:[&>[data-ui=button]]:w-full";
 const panelClass = "panel table-panel min-w-0 overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[861px]:flex min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:flex-col";
 
+function customerPayload(data: FormData) {
+  const value = (field: string) => String(data.get(field) || "").trim();
+  return {
+    name: value("name"),
+    phone: value("phone"),
+    cpf: value("cpf") || null,
+    address: value("address") || null,
+    notes: value("notes") || null,
+  };
+}
+
 function CustomerDetailModal({ customerId, onClose, onReport, onEdit }: { customerId: string | null; onClose: () => void; onReport: (loan: Loan) => void; onEdit: (customer: CustomerDetails) => void }) {
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
   const [error, setError] = useState("");
@@ -105,7 +116,7 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
     setSaving(true);
     setFormError("");
     try {
-      await customersService.create({ name: String(data.get("name") || ""), phone: String(data.get("phone") || ""), cpf: String(data.get("cpf") || "") || null, address: String(data.get("address") || "") || null, notes: String(data.get("notes") || "") || null });
+      await customersService.create(customerPayload(data));
       setModalOpen(false);
       onCreated("Cliente adicionado com sucesso.");
       load();
@@ -123,7 +134,7 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
     setSaving(true);
     setFormError("");
     try {
-      await customersService.update(editingCustomer.id, { name: String(data.get("name") || ""), phone: String(data.get("phone") || ""), cpf: String(data.get("cpf") || "") || null, address: String(data.get("address") || "") || null, notes: String(data.get("notes") || "") || null });
+      await customersService.update(editingCustomer.id, customerPayload(data));
       setEditingCustomer(null);
       onCreated("Dados do cliente atualizados.");
       load();
@@ -176,8 +187,8 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo cliente" description="Cadastre os dados principais para começar." size="md">
         <form onSubmit={createCustomer} className={formGridClass}>
           <Field label="Nome completo"><Input name="name" required minLength={2} placeholder="Ex.: Mariana Alves" autoFocus /></Field>
-          <Field label="Telefone"><Input name="phone" required minLength={8} placeholder="(11) 99999-9999" /></Field>
-          <Field label="CPF" hint="Opcional"><Input name="cpf" placeholder="000.000.000-00" /></Field>
+          <Field label="Telefone"><Input name="phone" type="tel" inputMode="tel" required minLength={8} placeholder="(11) 99999-9999" /></Field>
+          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" placeholder="000.000.000-00" /></Field>
           <Field label="Endereço" hint="Opcional"><Input name="address" placeholder="Rua, número e bairro" /></Field>
           <div className={fieldSpanClass}><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={3} placeholder="Informações úteis sobre o cliente" /></Field></div>
           {formError ? <div className={`${fieldSpanClass} form-error rounded-lg border border-rose-200 bg-rose-50 px-[11px] py-[9px] text-[11px] leading-relaxed text-rose-700`}>{formError}</div> : null}
@@ -187,8 +198,8 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
       <Modal open={Boolean(editingCustomer)} onClose={() => !saving && setEditingCustomer(null)} title="Editar cliente" description="Atualize os dados de cadastro quando precisar." size="md">
         {editingCustomer ? <form key={editingCustomer.id} onSubmit={updateCustomer} className={formGridClass}>
           <Field label="Nome completo"><Input name="name" required minLength={2} defaultValue={editingCustomer.name} autoFocus /></Field>
-          <Field label="Telefone"><Input name="phone" required minLength={8} defaultValue={editingCustomer.phone} /></Field>
-          <Field label="CPF" hint="Opcional"><Input name="cpf" defaultValue={editingCustomer.cpf || ""} placeholder="000.000.000-00" /></Field>
+          <Field label="Telefone"><Input name="phone" type="tel" inputMode="tel" required minLength={8} defaultValue={editingCustomer.phone} /></Field>
+          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" defaultValue={editingCustomer.cpf || ""} placeholder="000.000.000-00" /></Field>
           <Field label="Endereço" hint="Opcional"><Input name="address" defaultValue={editingCustomer.address || ""} placeholder="Rua, número e bairro" /></Field>
           <div className={fieldSpanClass}><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={3} defaultValue={editingCustomer.notes || ""} placeholder="Informações úteis sobre o cliente" /></Field></div>
           {formError ? <div className={`${fieldSpanClass} form-error rounded-lg border border-rose-200 bg-rose-50 px-[11px] py-[9px] text-[11px] leading-relaxed text-rose-700`}>{formError}</div> : null}

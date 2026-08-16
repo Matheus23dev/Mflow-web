@@ -37,20 +37,27 @@ const fieldSpanClass = "field-span min-[641px]:col-span-2";
 const formActionsClass =
   "form-actions -mx-[17px] -mb-[18px] mt-[3px] flex flex-col-reverse justify-end gap-2 border-t border-[#ebe8ee] bg-[#fbfafd] px-[17px] py-[13px] min-[421px]:flex-row min-[641px]:-mx-[22px] min-[641px]:-mb-[22px] min-[641px]:mt-1 min-[641px]:px-[22px] min-[641px]:py-[14px] max-[420px]:[&>[data-ui=button]]:w-full";
 
-function accruedLateFee(dueDate: string, lateFeePerDay: string) {
+function accruedLateFee(
+  dueDate: string,
+  lateFeePerDay: string,
+  paymentDate = todayInput(),
+) {
   const due = new Date(dueDate);
-  const today = new Date();
+  const reference = new Date(`${paymentDate}T00:00:00.000Z`);
   const dueUtc = Date.UTC(
     due.getUTCFullYear(),
     due.getUTCMonth(),
     due.getUTCDate(),
   );
-  const todayUtc = Date.UTC(
-    today.getUTCFullYear(),
-    today.getUTCMonth(),
-    today.getUTCDate(),
+  const referenceUtc = Date.UTC(
+    reference.getUTCFullYear(),
+    reference.getUTCMonth(),
+    reference.getUTCDate(),
   );
-  const days = Math.max(0, Math.floor((todayUtc - dueUtc) / 86_400_000));
+  const days = Math.max(
+    0,
+    Math.floor((referenceUtc - dueUtc) / 86_400_000),
+  );
   return days * Number(lateFeePerDay || 0);
 }
 
@@ -71,10 +78,12 @@ export function PaymentModal({
   const [paymentType, setPaymentType] = useState<PaymentType>("INSTALLMENT");
   const [chargeId, setChargeId] = useState("");
   const [amount, setAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(todayInput());
+  const [waiveLateFee, setWaiveLateFee] = useState(false);
   const [paymentMethod, setPaymentMethod] =
     useState<Payment["paymentMethod"]>("PIX");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(loanId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -107,9 +116,26 @@ export function PaymentModal({
     ).filter((charge) => charge.status !== "PAID");
   }, [loan, paymentType]);
 
+  const selectedCharge = useMemo(
+    () => availableCharges.find((charge) => charge.id === chargeId),
+    [availableCharges, chargeId],
+  );
+  const selectedOutstanding = selectedCharge
+    ? Number(selectedCharge.amount || selectedCharge.interestAmount) -
+      Number(selectedCharge.paidAmount)
+    : 0;
+  const selectedLateFee = selectedCharge
+    ? accruedLateFee(
+        selectedCharge.dueDate,
+        loan?.lateFeePerDay || "0",
+        paymentDate,
+      )
+    : 0;
+
   function selectType(next: PaymentType) {
     setPaymentType(next);
     setChargeId("");
+    setWaiveLateFee(false);
     if (next === "PAYOFF")
       setAmount(
         String(
@@ -124,18 +150,38 @@ export function PaymentModal({
 
   function selectCharge(id: string) {
     setChargeId(id);
+    setWaiveLateFee(false);
     const charge = availableCharges.find((item) => item.id === id);
-    if (charge) {
-      const outstanding =
-        Number(charge.amount || charge.interestAmount) -
-        Number(charge.paidAmount);
-      setAmount(
-        String(
-          outstanding +
-            accruedLateFee(charge.dueDate, loan?.lateFeePerDay || "0"),
-        ),
-      );
-    }
+    if (!charge) return;
+    const outstanding =
+      Number(charge.amount || charge.interestAmount) -
+      Number(charge.paidAmount);
+    const fee = accruedLateFee(
+      charge.dueDate,
+      loan?.lateFeePerDay || "0",
+      paymentDate,
+    );
+    setAmount(String(Number((outstanding + fee).toFixed(2))));
+  }
+
+  function changePaymentDate(nextDate: string) {
+    setPaymentDate(nextDate);
+    if (!selectedCharge) return;
+    const fee = accruedLateFee(
+      selectedCharge.dueDate,
+      loan?.lateFeePerDay || "0",
+      nextDate,
+    );
+    const value = selectedOutstanding + (waiveLateFee ? 0 : fee);
+    setAmount(String(Number(value.toFixed(2))));
+  }
+
+  function toggleLateFee() {
+    const nextWaiveLateFee = !waiveLateFee;
+    setWaiveLateFee(nextWaiveLateFee);
+    const value =
+      selectedOutstanding + (nextWaiveLateFee ? 0 : selectedLateFee);
+    setAmount(String(Number(value.toFixed(2))));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -152,6 +198,9 @@ export function PaymentModal({
         paymentDate: data.get("paymentDate"),
         paymentMethod,
         notes: data.get("notes"),
+        ...(["INSTALLMENT", "INTEREST"].includes(paymentType)
+          ? { waiveLateFee }
+          : {}),
         ...(paymentType === "INSTALLMENT" ? { installmentId: chargeId } : {}),
         ...(paymentType === "INTEREST" ? { monthlyChargeId: chargeId } : {}),
       });
@@ -276,10 +325,41 @@ export function PaymentModal({
             <Input
               name="paymentDate"
               type="date"
-              defaultValue={todayInput()}
+              value={paymentDate}
+              onChange={(event) => changePaymentDate(event.target.value)}
               required
             />
           </Field>
+          {selectedCharge && selectedLateFee > 0 ? (
+            <div className={fieldSpanClass}>
+              <div
+                className={`flex min-w-0 flex-col gap-3 rounded-xl border p-3 min-[421px]:flex-row min-[421px]:items-center min-[421px]:justify-between ${waiveLateFee ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}
+              >
+                <div className="flex min-w-0 flex-col gap-1">
+                  <strong
+                    className={`text-xs ${waiveLateFee ? "text-emerald-700" : "text-rose-700"}`}
+                  >
+                    {waiveLateFee
+                      ? "Juros removidos deste pagamento"
+                      : `Juros de atraso: ${money(selectedLateFee)}`}
+                  </strong>
+                  <span className="text-[11px] leading-relaxed text-slate-500">
+                    {waiveLateFee
+                      ? `Será cobrado somente o valor original pendente de ${money(selectedOutstanding)}.`
+                      : `Valor original pendente: ${money(selectedOutstanding)}.`}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  aria-pressed={waiveLateFee}
+                  className={`min-h-9 shrink-0 rounded-lg border px-3 py-2 text-[11px] font-bold transition ${waiveLateFee ? "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-100" : "border-rose-300 bg-white text-rose-700 hover:bg-rose-100"}`}
+                  onClick={toggleLateFee}
+                >
+                  {waiveLateFee ? "Incluir juros novamente" : "Remover juros"}
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className={fieldSpanClass}>
             <Field label="Forma de pagamento">
               <Select
@@ -343,6 +423,12 @@ const filters = [
   { value: "30days", label: "30 dias" },
 ] as const;
 
+const typeFilters = [
+  { value: "ALL", label: "Todas as modalidades" },
+  { value: "WEEKLY", label: "Parcelado" },
+  { value: "MONTHLY_INTEREST", label: "Juros mensal" },
+] as const;
+
 function whatsappPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
   return digits.startsWith("55") ? digits : `55${digits}`;
@@ -365,14 +451,18 @@ export function CollectionsPage({
 }) {
   const [filter, setFilter] =
     useState<(typeof filters)[number]["value"]>("week");
+  const [typeFilter, setTypeFilter] =
+    useState<(typeof typeFilters)[number]["value"]>("ALL");
   const [search, setSearch] = useState("");
   const { items, error, reload: load } = useCollections(filter, refreshKey);
   const filtered = useMemo(
     () =>
-      items?.filter((item) =>
-        item.customer.name.toLowerCase().includes(search.toLowerCase()),
+      items?.filter(
+        (item) =>
+          (typeFilter === "ALL" || item.type === typeFilter) &&
+          item.customer.name.toLowerCase().includes(search.toLowerCase()),
       ) || [],
-    [items, search],
+    [items, search, typeFilter],
   );
   const total = filtered.reduce((sum, item) => sum + item.updatedAmount, 0);
   const overdue = filtered
@@ -415,14 +505,32 @@ export function CollectionsPage({
               </button>
             ))}
           </div>
-          <div className="search-box small flex h-[43px] w-full items-center gap-[9px] rounded-[9px] border border-[#e6e3ea] bg-[#faf9fc] px-[11px] text-[#9b97a3] focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-100 min-[641px]:w-[210px]">
-            <Search className="shrink-0" size={17} />
-            <input
-              className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[#373340] outline-none placeholder:text-[#aaa6b1] min-[641px]:text-[13px]"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar cliente"
-            />
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[421px]:grid-cols-2 min-[641px]:flex min-[641px]:w-auto">
+            <Select
+              aria-label="Filtrar modalidade"
+              className="h-[43px] min-[641px]:w-[170px]"
+              value={typeFilter}
+              onChange={(event) =>
+                setTypeFilter(
+                  event.target.value as (typeof typeFilters)[number]["value"],
+                )
+              }
+            >
+              {typeFilters.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+            <div className="search-box small flex h-[43px] w-full min-w-0 items-center gap-[9px] rounded-[9px] border border-[#e6e3ea] bg-[#faf9fc] px-[11px] text-[#9b97a3] focus-within:border-violet-300 focus-within:ring-4 focus-within:ring-violet-100 min-[641px]:w-[210px]">
+              <Search className="shrink-0" size={17} />
+              <input
+                className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[#373340] outline-none placeholder:text-[#aaa6b1] min-[641px]:text-[13px]"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar cliente"
+              />
+            </div>
           </div>
         </div>
         {!items && !error ? <LoadingState /> : null}
