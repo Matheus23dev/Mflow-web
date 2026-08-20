@@ -59,7 +59,7 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
       ];
 
   return (
-    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden min-[861px]:[&>div:first-child]:mb-3 min-[861px]:[&>div:first-child_h1]:text-[28px] min-[861px]:[&>div:first-child_p:last-child]:mt-1 min-[861px]:[&>div:first-child_p:last-child]:leading-5">
+    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-x-hidden min-[861px]:overflow-y-auto min-[861px]:[&>div:first-child]:mb-3 min-[861px]:[&>div:first-child_h1]:text-[28px] min-[861px]:[&>div:first-child_p:last-child]:mt-1 min-[861px]:[&>div:first-child_p:last-child]:leading-5">
       <PageHeader
         eyebrow={`${greeting} · ${new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date())}`}
         title="Visão geral da operação"
@@ -97,9 +97,9 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         </section>
       </div>
 
-      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:mt-2 min-[861px]:min-h-0 min-[861px]:flex-1 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-4">
+      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:mt-2 min-[861px]:flex-none min-[1051px]:min-h-[250px] min-[1051px]:flex-1 min-[1051px]:grid-cols-[minmax(0,1.7fr)_minmax(250px,.7fr)] min-[1051px]:gap-3">
         <section className="panel upcoming-panel overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[861px]:flex min-[861px]:min-h-0 min-[861px]:flex-col">
-          <div className="panel-header flex items-center justify-between gap-[15px] px-5 pb-[14px] pt-[19px]"><div><span className="eyebrow m-0 text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Agenda financeira</span><h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39]">Próximas cobranças</h2></div><button className="text-button inline-flex items-center gap-[5px] border-0 bg-transparent p-0 text-[11px] font-bold text-violet-600" onClick={() => onNavigate("collections")}>Ver agenda completa <ArrowRight size={15} /></button></div>
+          <div className="panel-header flex items-center justify-between gap-[15px] px-5 pb-[14px] pt-[19px] min-[861px]:px-4 min-[861px]:pb-2 min-[861px]:pt-3"><div><span className="eyebrow m-0 text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Agenda financeira</span><h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39] min-[861px]:text-sm">Próximas cobranças</h2></div><button className="text-button inline-flex items-center gap-[5px] border-0 bg-transparent p-0 text-[11px] font-bold text-violet-600" onClick={() => onNavigate("collections")}>Ver agenda completa <ArrowRight size={15} /></button></div>
           {data.upcoming.length ? (
             <div className="collection-list compact px-[11px] pb-2.5 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:overflow-y-auto min-[861px]:overscroll-contain">
               {data.upcoming.slice(0, 6).map((item) => (
@@ -115,17 +115,17 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
           ) : <EmptyState title="Agenda tranquila" description="Nenhuma cobrança para os próximos sete dias." />}
         </section>
 
-        <aside className="dashboard-aside flex min-w-0 flex-col gap-3 min-[641px]:gap-4 min-[861px]:min-h-0">
-          <section className="panel flex-1 rounded-[14px] border border-[#e9e7ef] bg-white p-4 shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[641px]:p-5">
+        <aside className="dashboard-aside flex min-w-0 flex-col gap-3 min-[641px]:gap-4 min-[861px]:min-h-0 min-[861px]:gap-2">
+          <section className="panel flex-1 rounded-[14px] border border-[#e9e7ef] bg-white p-4 shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[641px]:p-5 min-[861px]:p-3">
             <span className="text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Resumo operacional</span>
-            <h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39]">Carteira ativa</h2>
-            <div className="mt-4 grid grid-cols-2 gap-2.5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700"><UsersRound size={17} /></span><strong className="mt-2 block text-lg">{m.activeCustomers}</strong><small className="text-[10.5px] text-slate-500">clientes ativos</small></div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700"><HandCoins size={17} /></span><strong className="mt-2 block text-lg">{m.activeLoans}</strong><small className="text-[10.5px] text-slate-500">contratos ativos</small></div>
-              <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-rose-100 text-rose-600"><TrendingUp size={17} /></span><strong className="mt-2 block text-lg">{m.overdueLoans}</strong><small className="text-[10.5px] text-slate-500">contratos atrasados</small></div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><span className="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700"><CircleDollarSign size={17} /></span><strong className="mt-2 block text-lg">{m.renewals}</strong><small className="text-[10.5px] text-slate-500">renovações</small></div>
+            <h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39] min-[861px]:text-sm">Carteira ativa</h2>
+            <div className="mt-4 grid grid-cols-2 gap-2.5 min-[861px]:mt-2 min-[861px]:gap-1.5">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 min-[861px]:rounded-lg min-[861px]:p-2"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700 min-[861px]:size-7"><UsersRound size={17} /></span><strong className="mt-2 block text-lg min-[861px]:mt-1 min-[861px]:text-base">{m.activeCustomers}</strong><small className="text-[10.5px] text-slate-500 min-[861px]:text-[9.5px]">clientes ativos</small></div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 min-[861px]:rounded-lg min-[861px]:p-2"><span className="grid size-8 place-items-center rounded-lg bg-violet-100 text-violet-700 min-[861px]:size-7"><HandCoins size={17} /></span><strong className="mt-2 block text-lg min-[861px]:mt-1 min-[861px]:text-base">{m.activeLoans}</strong><small className="text-[10.5px] text-slate-500 min-[861px]:text-[9.5px]">contratos ativos</small></div>
+              <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 min-[861px]:rounded-lg min-[861px]:p-2"><span className="grid size-8 place-items-center rounded-lg bg-rose-100 text-rose-600 min-[861px]:size-7"><TrendingUp size={17} /></span><strong className="mt-2 block text-lg min-[861px]:mt-1 min-[861px]:text-base">{m.overdueLoans}</strong><small className="text-[10.5px] text-slate-500 min-[861px]:text-[9.5px]">contratos atrasados</small></div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 min-[861px]:rounded-lg min-[861px]:p-2"><span className="grid size-8 place-items-center rounded-lg bg-emerald-100 text-emerald-700 min-[861px]:size-7"><CircleDollarSign size={17} /></span><strong className="mt-2 block text-lg min-[861px]:mt-1 min-[861px]:text-base">{m.renewals}</strong><small className="text-[10.5px] text-slate-500 min-[861px]:text-[9.5px]">renovações</small></div>
             </div>
-            <Button className="mt-3 w-full" variant="secondary" onClick={() => onNavigate("collections")}>Ver cobranças <ArrowRight size={15} /></Button>
+            <Button className="mt-3 w-full min-[861px]:mt-2 min-[861px]:min-h-9 min-[861px]:py-2" variant="secondary" onClick={() => onNavigate("collections")}>Ver cobranças <ArrowRight size={15} /></Button>
           </section>
         </aside>
       </div>

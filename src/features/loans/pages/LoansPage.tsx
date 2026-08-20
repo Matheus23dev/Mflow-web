@@ -1238,7 +1238,15 @@ export function LoansPage({
                     <strong className="overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">
                       {loan.customer.name}
                     </strong>
-                    <span className="mt-1 flex min-w-0 items-center gap-1 overflow-hidden text-[10.5px] text-[#9995a1] text-ellipsis whitespace-nowrap">
+                    <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden min-[641px]:hidden">
+                      <StatusBadge status={loan.status} />
+                      <span className="min-w-0 overflow-hidden text-[10px] text-[#8f8997] text-ellipsis whitespace-nowrap">
+                        {loan.summary.nextDue
+                          ? `Próx. ${date(loan.summary.nextDue)}`
+                          : "Sem parcela pendente"}
+                      </span>
+                    </div>
+                    <span className="mt-1 hidden min-w-0 items-center gap-1 overflow-hidden text-[10.5px] text-[#9995a1] text-ellipsis whitespace-nowrap min-[641px]:flex">
                       <Phone className="shrink-0" size={13} />{" "}
                       {formatPhone(loan.customer.phone) || "Telefone não informado"}
                     </span>
