@@ -59,7 +59,7 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
       ];
 
   return (
-    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-x-hidden min-[861px]:overflow-y-auto min-[861px]:[&>div:first-child]:mb-3 min-[861px]:[&>div:first-child_h1]:text-[28px] min-[861px]:[&>div:first-child_p:last-child]:mt-1 min-[861px]:[&>div:first-child_p:last-child]:leading-5">
+    <div className="page-enter data-page dashboard-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden min-[861px]:[&>div:first-child]:mb-3 min-[861px]:[&>div:first-child_h1]:text-[28px] min-[861px]:[&>div:first-child_p:last-child]:mt-1 min-[861px]:[&>div:first-child_p:last-child]:leading-5">
       <PageHeader
         eyebrow={`${greeting} · ${new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date())}`}
         title="Visão geral da operação"
@@ -97,18 +97,18 @@ export function DashboardPage({ refreshKey, onNavigate, onNewLoan }: { refreshKe
         </section>
       </div>
 
-      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:mt-2 min-[861px]:flex-none min-[1051px]:min-h-[250px] min-[1051px]:flex-1 min-[1051px]:grid-cols-[minmax(0,1.7fr)_minmax(250px,.7fr)] min-[1051px]:gap-3">
+      <div className="dashboard-grid mt-[17px] grid min-w-0 grid-cols-1 gap-[14px] min-[861px]:mt-2 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:grid-cols-[minmax(0,1.45fr)_minmax(190px,.75fr)] min-[861px]:gap-2 min-[1121px]:grid-cols-[minmax(0,1.7fr)_minmax(260px,.7fr)] min-[1121px]:gap-3">
         <section className="panel upcoming-panel overflow-hidden rounded-[14px] border border-[#e9e7ef] bg-white shadow-[0_3px_14px_rgba(42,35,65,0.025)] min-[861px]:flex min-[861px]:min-h-0 min-[861px]:flex-col">
           <div className="panel-header flex items-center justify-between gap-[15px] px-5 pb-[14px] pt-[19px] min-[861px]:px-4 min-[861px]:pb-2 min-[861px]:pt-3"><div><span className="eyebrow m-0 text-[9.5px] font-extrabold uppercase tracking-[1.2px] text-violet-600">Agenda financeira</span><h2 className="mb-0 mt-1 text-base tracking-[-0.2px] text-[#302c39] min-[861px]:text-sm">Próximas cobranças</h2></div><button className="text-button inline-flex items-center gap-[5px] border-0 bg-transparent p-0 text-[11px] font-bold text-violet-600" onClick={() => onNavigate("collections")}>Ver agenda completa <ArrowRight size={15} /></button></div>
           {data.upcoming.length ? (
-            <div className="collection-list compact px-[11px] pb-2.5 min-[861px]:min-h-0 min-[861px]:flex-1 min-[861px]:overflow-y-auto min-[861px]:overscroll-contain">
-              {data.upcoming.slice(0, 6).map((item) => (
-                <button className="collection-row grid w-full grid-cols-[40px_29px_minmax(80px,1fr)_auto] items-center gap-2 border-0 border-t border-[#f0eef3] bg-transparent px-1.5 py-[9px] text-left text-inherit transition hover:rounded-[9px] hover:bg-[#faf9fc] min-[641px]:grid-cols-[43px_31px_minmax(120px,1fr)_auto_18px] min-[641px]:gap-2.5 min-[641px]:px-[9px] min-[641px]:py-2.5" key={item.id} onClick={() => onNavigate("collections")}>
-                  <div className={`date-tile flex h-[42px] w-10 flex-col items-center justify-center rounded-[9px] border leading-none ${item.status === "OVERDUE" ? "overdue border-rose-200 bg-rose-50 text-rose-600" : "border-[#e8e4f0] bg-[#f5f2ff] text-[#5f42c3]"}`}><strong className="text-sm">{new Date(item.dueDate).getUTCDate().toString().padStart(2, "0")}</strong><span className="mt-1 text-[7.5px] font-bold uppercase">{compactDate(item.dueDate).split(" ")[1]}</span></div>
-                  <Avatar name={item.customer.name} size="sm" />
+            <div className="collection-list compact min-h-0 flex-1 overflow-hidden px-[11px] pb-2.5">
+              {data.upcoming.slice(0, 6).map((item, index) => (
+                <button className={`collection-row grid w-full grid-cols-[40px_29px_minmax(80px,1fr)_auto] items-center gap-2 border-0 border-t border-[#f0eef3] bg-transparent px-1.5 py-[9px] text-left text-inherit transition hover:rounded-[9px] hover:bg-[#faf9fc] min-[641px]:grid-cols-[43px_31px_minmax(120px,1fr)_auto_18px] min-[641px]:gap-2.5 min-[641px]:px-[9px] min-[641px]:py-2.5 min-[861px]:py-1.5 min-[861px]:max-[1050px]:grid-cols-[40px_minmax(80px,1fr)_auto] ${index >= 4 ? "[@media(max-height:820px)]:hidden" : ""}`} key={item.id} onClick={() => onNavigate("collections")}>
+                  <div className={`date-tile flex h-[42px] w-10 flex-col items-center justify-center rounded-[9px] border leading-none min-[861px]:h-9 min-[861px]:w-9 ${item.status === "OVERDUE" ? "overdue border-rose-200 bg-rose-50 text-rose-600" : "border-[#e8e4f0] bg-[#f5f2ff] text-[#5f42c3]"}`}><strong className="text-sm">{new Date(item.dueDate).getUTCDate().toString().padStart(2, "0")}</strong><span className="mt-1 text-[7.5px] font-bold uppercase">{compactDate(item.dueDate).split(" ")[1]}</span></div>
+                  <span className="inline-flex min-[861px]:max-[1050px]:hidden"><Avatar name={item.customer.name} size="sm" /></span>
                   <div className="collection-person flex min-w-0 flex-col"><strong className="overflow-hidden text-[12.5px] text-ellipsis whitespace-nowrap">{item.customer.name}</strong><span className="mt-[3px] text-[10.5px] text-[#97929f]">{item.label}</span></div>
                   <div className="collection-value flex min-w-[72px] flex-col items-end gap-1 min-[641px]:min-w-[90px]"><strong className="text-[12.5px]">{money(item.updatedAmount)}</strong><StatusBadge status={item.status} /></div>
-                  <ArrowRight className="row-arrow hidden text-[#aaa6b1] min-[641px]:block" size={16} />
+                  <ArrowRight className="row-arrow hidden text-[#aaa6b1] min-[641px]:block min-[861px]:max-[1050px]:hidden" size={16} />
                 </button>
               ))}
             </div>

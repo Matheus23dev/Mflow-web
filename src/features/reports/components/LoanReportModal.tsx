@@ -395,7 +395,7 @@ export function LoanReportModal({
                     ) : null}
                     {values.lateFee > 0 ? (
                       <small className="report-charge-late-fee mt-0.5 break-words text-[8.5px] text-rose-600">
-                        +{money(values.lateFee)} juros ({values.overdue}d)
+                        Juros: {money(values.lateFee)} ({values.overdue}d)
                       </small>
                     ) : null}
                   </div>
