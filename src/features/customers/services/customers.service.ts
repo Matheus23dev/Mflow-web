@@ -1,7 +1,9 @@
 import { api, queryString } from "@/shared/lib/api";
 import type { Customer, CustomerDetails, Loan } from "@/shared/types";
 
-export type CustomerPayload = Pick<Customer, "name" | "phone" | "cpf" | "address" | "notes">;
+export type CustomerPayload = Pick<Customer, "name" | "cpf" | "address" | "notes"> & {
+  phone?: string | null;
+};
 
 export const customersService = {
   list: (search = "") => api<Customer[]>(`/customers${queryString({ search })}`),

@@ -1,4 +1,5 @@
 import { chargeValues } from "./charges";
+import { formatCpf, formatPhone } from "./format";
 import { paymentMethodSummary, paymentsForCharge, pixReceiptsForPayments } from "./payments";
 import type { Charge, Loan, ReportData } from "../types";
 
@@ -180,9 +181,9 @@ function chargeRow(pdf: Pdf, loan: Loan, charge: Charge, x: number, y: number, w
   textColor(pdf, C.text);
   pdf.setFontSize(10.2);
   pdf.text(charge.number ? `Parcela ${charge.number}` : `Juros ${charge.referenceMonth}`, x + 25, y + 8);
-  pdf.setFont("helvetica", "normal");
-  textColor(pdf, C.muted);
-  pdf.setFontSize(8.2);
+  pdf.setFont("helvetica", "bold");
+  textColor(pdf, C.text);
+  pdf.setFontSize(10.5);
   pdf.text(date(charge.dueDate), x + 25, y + 14.7);
   fit(pdf, details, width - 29, 7.4, 5.8);
   pdf.text(details, x + 25, y + 21.5);
@@ -197,7 +198,6 @@ export async function createLoanDocumentPdf(loan: Loan) {
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const usable = 186;
   const gap = 4;
-  const charges = loan.type === "WEEKLY" ? loan.installments : loan.monthlyCharges;
 
   topRule(pdf);
   section(pdf, "Dados do cliente", 24);
@@ -218,8 +218,8 @@ export async function createLoanDocumentPdf(loan: Loan) {
   pdf.setFont("helvetica", "normal");
   textColor(pdf, C.muted);
   pdf.setFontSize(9.7);
-  pdf.text(`Telefone: ${loan.customer.phone}`, 17, 49);
-  pdf.text(`CPF: ${loan.customer.cpf || "Não informado"}`, 93, 49);
+  pdf.text(`Telefone: ${formatPhone(loan.customer.phone) || "Não informado"}`, 17, 49);
+  pdf.text(`CPF: ${formatCpf(loan.customer.cpf) || "Não informado"}`, 93, 49);
   const address = `Endereço: ${loan.customer.address || "Não informado"}`;
   fit(pdf, address, 121, 9.4, 7.5);
   pdf.text(address, 17, 56.5);
@@ -272,35 +272,38 @@ export async function createLoanDocumentPdf(loan: Loan) {
     field(pdf, 12 + (index % 3) * (conditionWidth + gap), 113 + Math.floor(index / 3) * 25, conditionWidth, label, value);
   });
 
-  let index = 0;
-  let agendaY = 173;
-  let firstPage = true;
-  while (index < charges.length || (firstPage && charges.length === 0)) {
-    if (!firstPage) {
-      pdf.addPage();
-      topRule(pdf);
-      agendaY = 29;
+  if (loan.type === "WEEKLY") {
+    const charges = loan.installments;
+    let index = 0;
+    let agendaY = 173;
+    let firstPage = true;
+    while (index < charges.length || (firstPage && charges.length === 0)) {
+      if (!firstPage) {
+        pdf.addPage();
+        topRule(pdf);
+        agendaY = 29;
+      }
+      section(pdf, firstPage ? `Agenda de cobranças - ${charges.length} itens` : "Agenda de cobranças - continuação", agendaY - 5);
+      if (!charges.length) {
+        pdf.setFont("helvetica", "normal");
+        textColor(pdf, C.muted);
+        pdf.setFontSize(8);
+        pdf.text("Nenhuma cobrança registrada.", 12, agendaY + 6);
+        break;
+      }
+      const rowHeight = 27;
+      const rows = Math.max(1, Math.floor((281 - agendaY) / rowHeight));
+      const pageCharges = charges.slice(index, index + rows * 2);
+      const firstColumn = Math.ceil(pageCharges.length / 2);
+      const width = (usable - gap) / 2;
+      pageCharges.forEach((charge, position) => {
+        const column = position < firstColumn ? 0 : 1;
+        const row = column === 0 ? position : position - firstColumn;
+        chargeRow(pdf, loan, charge, 12 + column * (width + gap), agendaY + row * rowHeight, width);
+      });
+      index += pageCharges.length;
+      firstPage = false;
     }
-    section(pdf, firstPage ? `Agenda de cobranças - ${charges.length} itens` : "Agenda de cobranças - continuação", agendaY - 5);
-    if (!charges.length) {
-      pdf.setFont("helvetica", "normal");
-      textColor(pdf, C.muted);
-      pdf.setFontSize(8);
-      pdf.text("Nenhuma cobrança registrada.", 12, agendaY + 6);
-      break;
-    }
-    const rowHeight = 27;
-    const rows = Math.max(1, Math.floor((281 - agendaY) / rowHeight));
-    const pageCharges = charges.slice(index, index + rows * 2);
-    const firstColumn = Math.ceil(pageCharges.length / 2);
-    const width = (usable - gap) / 2;
-    pageCharges.forEach((charge, position) => {
-      const column = position < firstColumn ? 0 : 1;
-      const row = column === 0 ? position : position - firstColumn;
-      chargeRow(pdf, loan, charge, 12 + column * (width + gap), agendaY + row * rowHeight, width);
-    });
-    index += pageCharges.length;
-    firstPage = false;
   }
   footer(pdf);
   return asFile(pdf, `Emprestimo-${loan.customer.name}`);

@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   CalendarCheck2,
+  CalendarRange,
   CircleDollarSign,
   Clock3,
   MessageCircle,
   Phone,
   Search,
 } from "lucide-react";
-import { date, money, todayInput } from "@/shared/lib/format";
+import { date, formatPhone, money, todayInput } from "@/shared/lib/format";
 import type { CollectionItem, Loan, Payment } from "@/shared/types";
 import {
   Avatar,
   Button,
+  CompactDateInput,
   EmptyState,
   ErrorState,
   Field,
@@ -24,7 +26,10 @@ import {
   Textarea,
 } from "@/shared/ui";
 import { useCollections } from "../hooks/useCollections";
-import { collectionsService } from "../services/collections.service";
+import {
+  collectionsService,
+  type CollectionFilter,
+} from "../services/collections.service";
 import { CollectionSummaryCard } from "../components/CollectionSummaryCard";
 import { ReceiptUploadField } from "@/features/receipts/components/ReceiptUploadField";
 import { receiptsService } from "@/features/receipts/services/receipts.service";
@@ -449,12 +454,23 @@ export function CollectionsPage({
   refreshKey: number;
   onPayment: (item: CollectionItem) => void;
 }) {
-  const [filter, setFilter] =
-    useState<(typeof filters)[number]["value"]>("week");
+  const [filter, setFilter] = useState<CollectionFilter>("week");
   const [typeFilter, setTypeFilter] =
     useState<(typeof typeFilters)[number]["value"]>("ALL");
   const [search, setSearch] = useState("");
-  const { items, error, reload: load } = useCollections(filter, refreshKey);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [customPeriod, setCustomPeriod] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+  const [periodError, setPeriodError] = useState("");
+  const { items, error, reload: load } = useCollections(
+    filter,
+    refreshKey,
+    customPeriod?.from,
+    customPeriod?.to,
+  );
   const filtered = useMemo(
     () =>
       items?.filter(
@@ -468,6 +484,27 @@ export function CollectionsPage({
   const overdue = filtered
     .filter((item) => item.status === "OVERDUE")
     .reduce((sum, item) => sum + item.updatedAmount, 0);
+  const customerCount = new Set(filtered.map((item) => item.customer.id)).size;
+
+  function selectQuickFilter(value: (typeof filters)[number]["value"]) {
+    setFilter(value);
+    setCustomPeriod(null);
+    setPeriodError("");
+  }
+
+  function applyCustomPeriod() {
+    if (!dateFrom || !dateTo) {
+      setPeriodError("Informe a data inicial e a data final.");
+      return;
+    }
+    if (dateFrom > dateTo) {
+      setPeriodError("A data inicial deve ser anterior à data final.");
+      return;
+    }
+    setCustomPeriod({ from: dateFrom, to: dateTo });
+    setFilter("custom");
+    setPeriodError("");
+  }
 
   return (
     <div className="page-enter data-page collections-page min-w-0 max-w-full min-[861px]:flex min-[861px]:h-full min-[861px]:min-h-0 min-[861px]:flex-col min-[861px]:overflow-hidden">
@@ -482,7 +519,7 @@ export function CollectionsPage({
           icon={<CalendarCheck2 size={20} />}
           label="No período"
           value={money(total)}
-          detail={`${filtered.length} cobranças`}
+          detail={`${filtered.length} cobranças de ${customerCount} ${customerCount === 1 ? "pessoa" : "pessoas"}`}
         />
         <CollectionSummaryCard
           tone="red"
@@ -499,7 +536,7 @@ export function CollectionsPage({
               <button
                 key={item.value}
                 className={`min-h-9 min-w-0 rounded-[7px] border-0 px-1.5 py-[7px] text-[11.5px] font-semibold ${filter === item.value ? "active bg-white text-violet-700 shadow-[0_2px_7px_rgba(42,32,70,.08)]" : "bg-transparent text-[#888391]"}`}
-                onClick={() => setFilter(item.value)}
+                onClick={() => selectQuickFilter(item.value)}
               >
                 {item.label}
               </button>
@@ -531,6 +568,51 @@ export function CollectionsPage({
                 placeholder="Buscar cliente"
               />
             </div>
+          </div>
+        </div>
+        <div className={`collection-period grid min-w-0 grid-cols-1 gap-2 border-b px-[18px] py-2.5 min-[641px]:grid-cols-[auto_minmax(260px,360px)_auto_minmax(0,1fr)] min-[641px]:items-end ${customPeriod ? "border-violet-200 bg-violet-50/40" : "border-[#eceaf0] bg-white"}`}>
+          <div className="flex min-h-9 items-center gap-2 text-xs font-semibold text-slate-600">
+            <CalendarRange className="text-violet-600" size={17} />
+            Período personalizado
+          </div>
+          <div className="grid min-w-0 grid-cols-2 gap-2">
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[9px] font-semibold text-slate-500">Data inicial</span>
+              <CompactDateInput
+                aria-label="Data inicial das cobranças"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(event) => setDateFrom(event.target.value)}
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1">
+              <span className="text-[9px] font-semibold text-slate-500">Data final</span>
+              <CompactDateInput
+                aria-label="Data final das cobranças"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(event) => setDateTo(event.target.value)}
+              />
+            </label>
+          </div>
+          <Button
+            className="min-h-9 w-full min-[641px]:w-auto"
+            variant="secondary"
+            type="button"
+            onClick={applyCustomPeriod}
+          >
+            Filtrar período
+          </Button>
+          <div className="min-w-0 self-center">
+            {periodError ? (
+              <span className="text-[10px] text-rose-600">{periodError}</span>
+            ) : customPeriod ? (
+              <span className="text-[10px] text-violet-700">
+                Exibindo quem deve pagar entre {date(customPeriod.from)} e {date(customPeriod.to)}.
+              </span>
+            ) : (
+              <span className="text-[10px] text-slate-400">Escolha duas datas para calcular o valor previsto e listar as pessoas.</span>
+            )}
           </div>
         </div>
         {!items && !error ? <LoadingState /> : null}
@@ -582,7 +664,7 @@ export function CollectionsPage({
                   </strong>
                   <span className="mt-1 flex items-center gap-1 text-[10.5px] text-[#98939e]">
                     <Phone className="shrink-0" size={13} />{" "}
-                    {item.customer.phone}
+                    {formatPhone(item.customer.phone) || "Telefone não informado"}
                   </span>
                 </div>
               </div>
@@ -620,15 +702,27 @@ export function CollectionsPage({
                 ) : null}
               </div>
               <div className="collection-actions [grid-area:actions] grid grid-cols-[44px_minmax(0,1fr)] items-center justify-stretch gap-[7px] min-[1051px]:[grid-area:auto] min-[1051px]:flex min-[1051px]:justify-end">
-                <a
-                  className="icon-button inline-grid size-10 place-items-center rounded-[10px] border border-[#e9e5ee] bg-white p-0 text-emerald-600 transition hover:bg-emerald-50"
-                  href={`https://wa.me/${whatsappPhone(item.customer.phone)}?text=${encodeURIComponent(reminderText(item))}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Enviar lembrete para ${item.customer.name}`}
-                >
-                  <MessageCircle size={18} />
-                </a>
+                {item.customer.phone ? (
+                  <a
+                    className="icon-button inline-grid size-10 place-items-center rounded-[10px] border border-[#e9e5ee] bg-white p-0 text-emerald-600 transition hover:bg-emerald-50"
+                    href={`https://wa.me/${whatsappPhone(item.customer.phone)}?text=${encodeURIComponent(reminderText(item))}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Enviar lembrete para ${item.customer.name}`}
+                  >
+                    <MessageCircle size={18} />
+                  </a>
+                ) : (
+                  <button
+                    className="icon-button inline-grid size-10 cursor-not-allowed place-items-center rounded-[10px] border border-[#e9e5ee] bg-slate-50 p-0 text-slate-300"
+                    type="button"
+                    disabled
+                    aria-label={`${item.customer.name} não possui telefone cadastrado`}
+                    title="Telefone não informado"
+                  >
+                    <MessageCircle size={18} />
+                  </button>
+                )}
                 <Button className="w-full" onClick={() => onPayment(item)}>
                   <CircleDollarSign size={17} /> Receber
                 </Button>

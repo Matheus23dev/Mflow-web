@@ -15,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
-import { date, money, todayInput } from "@/shared/lib/format";
+import { date, formatPhone, money, todayInput } from "@/shared/lib/format";
 import {
   paymentMethodSummary,
   paymentsForCharge,
@@ -210,7 +210,7 @@ export function LoanFormModal({
                 </option>
                 {customers.map((customer) => (
                   <option value={customer.id} key={customer.id}>
-                    {customer.name} · {customer.phone}
+                    {customer.name}
                   </option>
                 ))}
               </Select>
@@ -1240,7 +1240,7 @@ export function LoansPage({
                     </strong>
                     <span className="mt-1 flex min-w-0 items-center gap-1 overflow-hidden text-[10.5px] text-[#9995a1] text-ellipsis whitespace-nowrap">
                       <Phone className="shrink-0" size={13} />{" "}
-                      {loan.customer.phone}
+                      {formatPhone(loan.customer.phone) || "Telefone não informado"}
                     </span>
                   </div>
                   <div className="loan-type hidden min-w-0 flex-col min-[861px]:flex">

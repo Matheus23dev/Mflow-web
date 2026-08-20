@@ -9,7 +9,7 @@ import {
   Share2,
 } from "lucide-react";
 import { chargeValues } from "@/shared/lib/charges";
-import { date, money } from "@/shared/lib/format";
+import { date, formatCpf, formatPhone, money } from "@/shared/lib/format";
 import { createLoanDocumentPdf } from "@/shared/lib/documentPdf";
 import { sharePdfFile } from "@/shared/lib/pdf";
 import {
@@ -186,6 +186,7 @@ export function LoanReportModal({
   }
 
   function sendWhatsapp() {
+    if (!loan!.customer.phone) return;
     const url = `https://wa.me/${whatsappPhone(loan!.customer.phone)}?text=${encodeURIComponent(reportText(loan!))}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -231,7 +232,7 @@ export function LoanReportModal({
                 <Phone size={14} /> Telefone
               </span>
               <strong className={reportValueClass}>
-                {loan.customer.phone}
+                {formatPhone(loan.customer.phone) || "Não informado"}
               </strong>
             </div>
             <div className="report-client-item flex min-w-0 flex-col">
@@ -241,7 +242,7 @@ export function LoanReportModal({
                 <IdCard size={14} /> CPF
               </span>
               <strong className={reportValueClass}>
-                {loan.customer.cpf || "Não informado"}
+                {formatCpf(loan.customer.cpf) || "Não informado"}
               </strong>
             </div>
             <div className="report-client-item report-client-address flex min-w-0 flex-col min-[421px]:col-span-2 print:col-span-2">
@@ -439,7 +440,7 @@ export function LoanReportModal({
         <Button variant="secondary" onClick={copyReport}>
           <Copy size={17} /> {copied ? "Resumo copiado" : "Copiar resumo"}
         </Button>
-        <Button variant="secondary" onClick={sendWhatsapp}>
+        <Button variant="secondary" disabled={!loan.customer.phone} onClick={sendWhatsapp}>
           <MessageCircle size={17} /> Enviar no WhatsApp
         </Button>
         <Button

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ChevronRight, FileText, IdCard, MapPin, Pencil, Phone, Plus, Search } from "lucide-react";
-import { date, money } from "@/shared/lib/format";
+import { date, digitsOnly, formatCpf, formatPhone, money } from "@/shared/lib/format";
 import type { Customer, CustomerDetails, Loan } from "@/shared/types";
 import { Avatar, Button, EmptyState, ErrorState, Field, Input, LoadingState, Modal, PageHeader, StatusBadge, Textarea } from "@/shared/ui";
 import { useCustomers } from "../hooks/useCustomers";
@@ -18,11 +18,19 @@ function customerPayload(data: FormData) {
   const value = (field: string) => String(data.get(field) || "").trim();
   return {
     name: value("name"),
-    phone: value("phone"),
-    cpf: value("cpf") || null,
+    phone: digitsOnly(value("phone")) || null,
+    cpf: digitsOnly(value("cpf")) || null,
     address: value("address") || null,
     notes: value("notes") || null,
   };
+}
+
+function applyPhoneMask(event: FormEvent<HTMLInputElement>) {
+  event.currentTarget.value = formatPhone(event.currentTarget.value);
+}
+
+function applyCpfMask(event: FormEvent<HTMLInputElement>) {
+  event.currentTarget.value = formatCpf(event.currentTarget.value);
 }
 
 function CustomerDetailModal({ customerId, onClose, onReport, onEdit }: { customerId: string | null; onClose: () => void; onReport: (loan: Loan) => void; onEdit: (customer: CustomerDetails) => void }) {
@@ -61,8 +69,8 @@ function CustomerDetailModal({ customerId, onClose, onReport, onEdit }: { custom
           <div className="customer-profile-main flex min-w-0 flex-1 flex-col">
             <strong className="overflow-hidden text-[17px] text-[#302b3a] text-ellipsis whitespace-nowrap">{customer.name}</strong>
             <div className="customer-profile-meta mt-[7px] flex flex-wrap gap-x-[18px] gap-y-2">
-              <span className="flex items-center gap-1.5 text-xs text-[#686171] [&>svg]:shrink-0 [&>svg]:text-violet-600"><Phone size={15} /> {customer.phone}</span>
-              <span className="flex items-center gap-1.5 text-xs text-[#686171] [&>svg]:shrink-0 [&>svg]:text-violet-600"><IdCard size={15} /> {customer.cpf || "CPF não informado"}</span>
+              <span className="flex items-center gap-1.5 text-xs text-[#686171] [&>svg]:shrink-0 [&>svg]:text-violet-600"><Phone size={15} /> {formatPhone(customer.phone) || "Telefone não informado"}</span>
+              <span className="flex items-center gap-1.5 text-xs text-[#686171] [&>svg]:shrink-0 [&>svg]:text-violet-600"><IdCard size={15} /> {formatCpf(customer.cpf) || "CPF não informado"}</span>
             </div>
             <span className="customer-profile-address mt-[7px] flex items-center gap-1.5 text-xs text-[#817a89] [&>svg]:shrink-0 [&>svg]:text-violet-600"><MapPin size={15} /> {customer.address || "Endereço não informado"}</span>
           </div>
@@ -172,8 +180,8 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
               const activeBalance = customer.loans?.reduce((sum, loan) => sum + Number(loan.openBalance || 0), 0) || 0;
               return (
                 <button className="customer-row grid w-full grid-cols-[minmax(0,1fr)_minmax(78px,auto)_16px] items-center gap-2 overflow-hidden border-0 border-t border-[#f0eef3] bg-transparent px-2 py-2.5 text-left text-[#393541] transition hover:rounded-[9px] hover:bg-[#faf9fc] min-[641px]:grid-cols-[minmax(175px,1.2fr)_.55fr_.7fr_18px] min-[641px]:gap-[13px] min-[641px]:px-[13px] min-[641px]:py-2 min-[861px]:grid-cols-[minmax(180px,1.1fr)_minmax(150px,1fr)_.5fr_.65fr_18px] min-[1121px]:grid-cols-[minmax(190px,1.25fr)_minmax(175px,1fr)_.55fr_.7fr_22px]" key={customer.id} onClick={() => setSelectedCustomer(customer.id)}>
-                  <div className="customer-name flex min-w-0 flex-row items-center gap-2.5"><Avatar name={customer.name} /><p className="m-0 flex min-w-0 flex-1 flex-col"><strong className="overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">{customer.name}</strong><span className="mt-[3px] overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap">{customer.cpf || "CPF não informado"}</span></p></div>
-                  <div className="customer-contact hidden min-w-0 flex-col min-[861px]:flex"><span className="flex items-center gap-[5px] text-xs"><Phone className="shrink-0" size={14} /> {customer.phone}</span><small className="mt-[3px] flex items-center gap-1 overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap"><MapPin className="shrink-0" size={13} /> {customer.address || "Endereço não informado"}</small></div>
+                  <div className="customer-name flex min-w-0 flex-row items-center gap-2.5"><Avatar name={customer.name} /><p className="m-0 flex min-w-0 flex-1 flex-col"><strong className="overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">{customer.name}</strong><span className="mt-[3px] overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap">{formatCpf(customer.cpf) || "CPF não informado"}</span></p></div>
+                  <div className="customer-contact hidden min-w-0 flex-col min-[861px]:flex"><span className="flex items-center gap-[5px] text-xs"><Phone className="shrink-0" size={14} /> {formatPhone(customer.phone) || "Não informado"}</span><small className="mt-[3px] flex items-center gap-1 overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap"><MapPin className="shrink-0" size={13} /> {customer.address || "Endereço não informado"}</small></div>
                   <div className="customer-loan-count hidden min-w-0 flex-col min-[641px]:flex"><strong className="overflow-hidden text-[13px] text-ellipsis whitespace-nowrap">{customer._count?.loans || 0}</strong><small className="mt-[3px] overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap">{customer.loans?.length || 0} ativos</small></div>
                   <div className="customer-open-balance flex min-w-0 flex-col items-end text-right min-[641px]:items-start min-[641px]:text-left"><strong className={`overflow-hidden text-[13px] text-ellipsis whitespace-nowrap ${activeBalance ? "purple-text text-violet-700" : ""}`}>{money(activeBalance)}</strong><small className="mt-[3px] overflow-hidden text-[10.5px] text-[#9b97a3] text-ellipsis whitespace-nowrap">principal</small></div>
                   <ChevronRight size={18} className="muted text-[#aaa6b1]" />
@@ -187,8 +195,8 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Novo cliente" description="Cadastre os dados principais para começar." size="md">
         <form onSubmit={createCustomer} className={formGridClass}>
           <Field label="Nome completo"><Input name="name" required minLength={2} placeholder="Ex.: Mariana Alves" autoFocus /></Field>
-          <Field label="Telefone"><Input name="phone" type="tel" inputMode="tel" required minLength={8} placeholder="(11) 99999-9999" /></Field>
-          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" placeholder="000.000.000-00" /></Field>
+          <Field label="Telefone" hint="Opcional"><Input name="phone" type="tel" inputMode="numeric" maxLength={15} pattern="\([0-9]{2}\) [0-9]{4,5}-[0-9]{4}" title="Digite o DDD e o número completo" onInput={applyPhoneMask} placeholder="(11) 99999-9999" /></Field>
+          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" maxLength={14} pattern="[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}" title="Digite os 11 números do CPF" onInput={applyCpfMask} placeholder="000.000.000-00" /></Field>
           <Field label="Endereço" hint="Opcional"><Input name="address" placeholder="Rua, número e bairro" /></Field>
           <div className={fieldSpanClass}><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={3} placeholder="Informações úteis sobre o cliente" /></Field></div>
           {formError ? <div className={`${fieldSpanClass} form-error rounded-lg border border-rose-200 bg-rose-50 px-[11px] py-[9px] text-[11px] leading-relaxed text-rose-700`}>{formError}</div> : null}
@@ -198,8 +206,8 @@ export function CustomersPage({ refreshKey, onCreated, onReport, externalSearch 
       <Modal open={Boolean(editingCustomer)} onClose={() => !saving && setEditingCustomer(null)} title="Editar cliente" description="Atualize os dados de cadastro quando precisar." size="md">
         {editingCustomer ? <form key={editingCustomer.id} onSubmit={updateCustomer} className={formGridClass}>
           <Field label="Nome completo"><Input name="name" required minLength={2} defaultValue={editingCustomer.name} autoFocus /></Field>
-          <Field label="Telefone"><Input name="phone" type="tel" inputMode="tel" required minLength={8} defaultValue={editingCustomer.phone} /></Field>
-          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" defaultValue={editingCustomer.cpf || ""} placeholder="000.000.000-00" /></Field>
+          <Field label="Telefone" hint="Opcional"><Input name="phone" type="tel" inputMode="numeric" maxLength={15} pattern="\([0-9]{2}\) [0-9]{4,5}-[0-9]{4}" title="Digite o DDD e o número completo" onInput={applyPhoneMask} defaultValue={formatPhone(editingCustomer.phone)} placeholder="(11) 99999-9999" /></Field>
+          <Field label="CPF" hint="Opcional"><Input name="cpf" inputMode="numeric" maxLength={14} pattern="[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}" title="Digite os 11 números do CPF" onInput={applyCpfMask} defaultValue={formatCpf(editingCustomer.cpf)} placeholder="000.000.000-00" /></Field>
           <Field label="Endereço" hint="Opcional"><Input name="address" defaultValue={editingCustomer.address || ""} placeholder="Rua, número e bairro" /></Field>
           <div className={fieldSpanClass}><Field label="Observações" hint="Opcional"><Textarea name="notes" rows={3} defaultValue={editingCustomer.notes || ""} placeholder="Informações úteis sobre o cliente" /></Field></div>
           {formError ? <div className={`${fieldSpanClass} form-error rounded-lg border border-rose-200 bg-rose-50 px-[11px] py-[9px] text-[11px] leading-relaxed text-rose-700`}>{formError}</div> : null}
